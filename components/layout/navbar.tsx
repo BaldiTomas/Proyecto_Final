@@ -9,7 +9,7 @@ import { useWeb3 } from "@/providers/web3-provider"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { User, LogOut, Settings, Wallet, Menu, X, Package, Shield, Truck } from "lucide-react"
+import { User, LogOut, Settings, Wallet, Menu, X, Package, Shield, Truck, FileText } from "lucide-react"
 
 export function Navbar() {
   const router = useRouter()
@@ -46,6 +46,7 @@ export function Navbar() {
     const baseItems = [
       { href: "/dashboard", label: "Dashboard", icon: Package },
       { href: "/products", label: "Productos", icon: Package },
+      { href: "/reports", label: "Reportes", icon: FileText }, // Nueva ruta agregada
     ]
 
     switch (user.role) {
