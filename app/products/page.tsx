@@ -41,32 +41,51 @@ export default function ProductsPage() {
   const mockProducts: ProductType[] = [
     {
       id: 1,
-      name: "Granos de Café Orgánico",
-      description: "Granos de café premium orgánico de Colombia",
-      producer: "Finca Valle Verde",
+      name: "Pintura Original — 'Amanecer en el Río'",
+      description: "Obra de arte al óleo sobre lienzo, realizada por artista argentino emergente.",
+      producer: "Estudio ArteSur",
       status: "verified",
-      createdAt: "2024-01-15",
-      category: "Alimentos",
+      createdAt: "2024-05-22",
+      category: "Obra de Arte",
     },
     {
       id: 2,
-      name: "Hojas de Té Premium",
-      description: "Hojas de té de alta calidad de Sri Lanka",
-      producer: "Montaña Tea Co.",
-      status: "pending",
-      createdAt: "2024-01-14",
-      category: "Bebidas",
+      name: "La Noche Estrellada — Vincent van Gogh",
+      description: "Pintura al óleo famosa por su estilo postimpresionista y su expresión emocional.",
+      producer: "Museo de Arte Moderno (MoMA)",
+      status: "verified",
+      createdAt: "2024-05-01",
+      category: "Obra de Arte",
     },
     {
       id: 3,
-      name: "Miel Artesanal",
-      description: "Miel pura de apicultores locales",
-      producer: "Miel Dorada Ltda",
+      name: "Escultura en Mármol — 'Equilibrio'",
+      description: "Escultura contemporánea en mármol blanco de Carrara.",
+      producer: "Taller Fusión Arte",
       status: "verified",
-      createdAt: "2024-01-13",
-      category: "Alimentos",
+      createdAt: "2024-05-18",
+      category: "Obra de Arte",
     },
-  ]
+    {
+      id: 4,
+      name: "Vacuna Antigripal Tetravalente",
+      description: "Vacuna recomendada por la OMS para la temporada 2024.",
+      producer: "BioImmuni S.A.",
+      status: "pending",
+      createdAt: "2024-05-16",
+      category: "Producto Médico",
+    },
+    {
+      id: 5,
+      name: "Penicilina G",
+      description: "Antibiótico descubierto por Alexander Fleming, revolucionó la medicina moderna.",
+      producer: "GlaxoSmithKline",
+      status: "verified",
+      createdAt: "2024-04-26",
+      category: "Medicamento",
+    },
+  ];
+
 
   useEffect(() => {
     setTimeout(() => {
