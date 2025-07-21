@@ -37,7 +37,6 @@ const roles = [
   { value: "producer", label: "Productor" },
   { value: "seller", label: "Vendedor" },
   { value: "distributor", label: "Distribuidor" },
-  { value: "user", label: "Usuario" },
 ];
 
 type User = {
