@@ -83,7 +83,6 @@ export default function DistributorPage() {
     }
     try {
       data.transportCompany = user!.name;
-
       const quantityInt = Number.isInteger(data.quantity)
         ? data.quantity
         : Math.floor(Number(data.quantity));
@@ -97,8 +96,11 @@ export default function DistributorPage() {
         quantityInt,
         data.notes
       );
-      toast.success("Envío registrado en cadena");
-
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) {
+        throw new Error("La transacción on‑chain falló");
+      }
+      toast.success("Envío registrado en blockchain");
       const res = await fetch(`${API}/distributor/shipments`, {
         method: "POST",
         headers: {
@@ -122,10 +124,7 @@ export default function DistributorPage() {
     }
   };
 
-  const handleUpdateStatus = async (
-    id: number,
-    status: ShipmentStatus
-  ): Promise<void> => {
+  const handleUpdateStatus = async (id: number, status: ShipmentStatus) => {
     if (!token) {
       toast.error("No autenticado");
       return;
@@ -141,7 +140,6 @@ export default function DistributorPage() {
         delivered: 2,
         cancelled: 3,
       };
-
       const statusIndex = statusMap[status];
       if (statusIndex === undefined) {
         toast.error("Estado inválido");
@@ -150,8 +148,11 @@ export default function DistributorPage() {
 
       const contract = await getShipmentContract();
       const tx = await contract.updateStatus(id, statusIndex);
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) {
+        throw new Error("La actualización on‑chain falló");
+      }
       toast.success(`Estado actualizado en blockchain: ${status}`);
-
       const res = await fetch(`${API}/distributor/shipments/${id}/status`, {
         method: "PUT",
         headers: {
@@ -199,8 +200,8 @@ export default function DistributorPage() {
 
         <Tabs defaultValue="purchases" className="space-y-6">
           <TabsList className="grid grid-cols-2 bg-slate-800 border-slate-700">
-            <TabsTrigger value="purchases">Compras</TabsTrigger>
-            <TabsTrigger value="shipments">Envíos</TabsTrigger>
+            <TabsTrigger value="purchases">Envíos</TabsTrigger>
+            <TabsTrigger value="shipments">Gestion</TabsTrigger>
           </TabsList>
 
           <TabsContent value="purchases">
