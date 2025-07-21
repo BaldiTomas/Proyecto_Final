@@ -21,7 +21,7 @@ export default function PurchasesTab({
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md border border-slate-700">
-      <h2 className="text-xl font-semibold text-white mb-4">Compras Pendientes</h2>
+      <h2 className="text-xl font-semibold text-white mb-4">Envios Disponibles</h2>
       <Table className="bg-slate-900 border border-slate-700 rounded-md">
         <TableHeader>
           <TableRow>
@@ -125,7 +125,7 @@ export default function PurchasesTab({
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="text-center text-gray-400">
-                No hay compras pendientes.
+                No hay envios disponibles.
               </TableCell>
             </TableRow>
           )}

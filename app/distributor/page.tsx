@@ -200,8 +200,8 @@ export default function DistributorPage() {
 
         <Tabs defaultValue="purchases" className="space-y-6">
           <TabsList className="grid grid-cols-2 bg-slate-800 border-slate-700">
-            <TabsTrigger value="purchases">Compras</TabsTrigger>
-            <TabsTrigger value="shipments">Envíos</TabsTrigger>
+            <TabsTrigger value="purchases">Envíos</TabsTrigger>
+            <TabsTrigger value="shipments">Gestion</TabsTrigger>
           </TabsList>
 
           <TabsContent value="purchases">

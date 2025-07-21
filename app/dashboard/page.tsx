@@ -146,6 +146,8 @@ export default function DashboardPage() {
                 ? "Envío iniciado"
                 : s.status === "delivered"
                 ? "Envío entregado"
+                :s.status === "cancelled"
+                ? "Envío cancelado"
                 : `Envío ${s.status}`,
             actor_name: user.name,
             notes: s.notes || "",
