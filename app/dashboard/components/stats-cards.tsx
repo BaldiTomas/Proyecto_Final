@@ -32,7 +32,7 @@ export function StatsCards({ userRole, stats, loading }: StatsCardsProps) {
       case "admin":
         return [
           { title: "Usuarios Totales", value: stats.totalUsers, icon: <Users className="h-4 w-4 text-gray-500" /> },
-          { title: "Productos Activos", value: stats.activeProducts, icon: <Package className="h-4 w-4 text-gray-500" /> },
+          { title: "Productos", value: stats.activeProducts, icon: <Package className="h-4 w-4 text-gray-500" /> },
           { title: "Ventas Totales", value: stats.totalSales, icon: <ShoppingCart className="h-4 w-4 text-gray-500" /> },
           { title: "Envíos Pendientes", value: stats.pendingShipments, icon: <Truck className="h-4 w-4 text-gray-500" /> },
         ];

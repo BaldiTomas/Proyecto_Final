@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ProductList } from "./components/ProductList";
 import { ProductCreateDialog } from "./components/ProductCreateDialog";
 import { ProductDetailsDialog } from "./components/ProductDetailsDialog";
+import { setProductActiveOnChain } from "../../lib/contracts";
 
 interface Product {
   id: number;
@@ -64,21 +65,42 @@ export default function ProductsPage() {
 
   if (!user) return null;
 
-  const handleDeleteProduct = async (id: number) => {
+const handleDeleteProduct = async (id: number) => {
+    if (!token) {
+      toast.error("No autenticado");
+      return;
+    }
     try {
+      // 1) On‑chain
+      await setProductActiveOnChain(id, false);
+      toast.success("Producto marcado inactivo en blockchain");
+
+      // 2) Backend (soft‑delete)
       const res = await fetch(`http://localhost:3001/api/products/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_active: false }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al marcar inactivo en BD");
+      }
+
       setProducts((p) => p.filter((prod) => prod.id !== id));
-      toast.success("Producto eliminado");
-    } catch {
-      toast.error("Error al eliminar producto");
+      toast.success("Producto marcado inactivo en base de datos");
+    } catch (err: any) {
+      console.error("Error al eliminar producto:", err);
+      toast.error("Error al eliminar producto: " + err.message);
     }
   };
 
-  const handleCreateProduct = async ( np: NewProduct & { blockchain_hash: string; metadata_hash: string }) => {
+
+  const handleCreateProduct = async (
+    np: NewProduct & { blockchain_hash: string; metadata_hash: string }
+  ) => {
     try {
       const payload = {
         ...np,
@@ -90,7 +112,10 @@ export default function ProductsPage() {
       };
       const res = await fetch("http://localhost:3001/api/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
@@ -102,11 +127,16 @@ export default function ProductsPage() {
     }
   };
 
-  const handleUpdateProduct = async (upd: Partial<Product> & { id: number }) => {
+  const handleUpdateProduct = async (
+    upd: Partial<Product> & { id: number }
+  ) => {
     try {
       const res = await fetch(`http://localhost:3001/api/products/${upd.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(upd),
       });
       if (!res.ok) throw new Error();

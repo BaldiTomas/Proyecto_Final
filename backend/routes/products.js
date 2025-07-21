@@ -231,41 +231,81 @@ router.put(
   authorizeRole(["producer", "admin"]),
   async (req, res) => {
     const productId = req.params.id;
-    const userId = req.user.id;
-    const {
-      name,
-      description,
-      category,
-      origin,
-      production_date,
-      metadata_hash,
-      is_active,
-      stock,
-    } = req.body;
-
-    if (!name || !description || !category || !origin || !production_date) {
-      return res
-        .status(400)
-        .json({ error: "Faltan campos requeridos para el producto." });
-    }
-
     const client = await pool.connect();
+
     try {
       await client.query("BEGIN");
+
+      // 1) Si sólo vienen cambios en is_active => soft‑delete ligero
+      if (
+        Object.keys(req.body).length === 1 &&
+        req.body.hasOwnProperty("is_active")
+      ) {
+        const { is_active } = req.body;
+        if (typeof is_active !== "boolean") {
+          await client.query("ROLLBACK");
+          return res
+            .status(400)
+            .json({ error: "is_active debe ser booleano" });
+        }
+        const result = await client.query(
+          `UPDATE products
+             SET is_active = $1, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $2
+           RETURNING *`,
+          [is_active, productId]
+        );
+        if (!result.rows.length) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Producto no encontrado" });
+        }
+        await client.query("COMMIT");
+        return res.json({
+          message: `Producto ${productId} marcado inactivo`,
+          product: result.rows[0],
+        });
+      }
+
+      // 2) Si vienen más campos => lógica completa de actualización
+      const {
+        name,
+        description,
+        category,
+        origin,
+        production_date,
+        metadata_hash,
+        is_active,
+        stock,
+      } = req.body;
+
+      // validación de campos requeridos
+      if (
+        !name ||
+        !description ||
+        !category ||
+        !origin ||
+        !production_date
+      ) {
+        await client.query("ROLLBACK");
+        return res
+          .status(400)
+          .json({ error: "Faltan campos requeridos para el producto." });
+      }
+
+      // actualiza tabla products
       const updateProduct = await client.query(
         `
         UPDATE products
-        SET
-          name            = $1,
-          description     = $2,
-          category        = $3,
-          origin          = $4,
-          production_date = $5,
-          metadata_hash   = COALESCE($6, metadata_hash),
-          is_active       = COALESCE($7, is_active),
-          updated_at      = CURRENT_TIMESTAMP
-        WHERE id = $8
-        RETURNING *
+           SET name            = $1,
+               description     = $2,
+               category        = $3,
+               origin          = $4,
+               production_date = $5,
+               metadata_hash   = COALESCE($6, metadata_hash),
+               is_active       = COALESCE($7, is_active),
+               updated_at      = CURRENT_TIMESTAMP
+         WHERE id = $8
+         RETURNING *
         `,
         [
           name,
@@ -282,40 +322,42 @@ router.put(
         await client.query("ROLLBACK");
         return res.status(404).json({ error: "Producto no encontrado" });
       }
+
+      // si viene stock, actualiza en product_custodies
       let newStockRow = null;
       if (typeof stock === "number") {
-        const updateStock = await client.query(
-          `
-          UPDATE product_custodies
-          SET stock = $1
-          WHERE product_id = $2 AND user_id = $3
-          RETURNING stock
-          `,
+        const userId = req.user.id;
+        const upd = await client.query(
+          `UPDATE product_custodies
+             SET stock = $1
+           WHERE product_id = $2 AND user_id = $3
+           RETURNING stock`,
           [stock, productId, userId]
         );
-        if (!updateStock.rows.length) {
-          const insertStock = await client.query(
+        if (!upd.rows.length) {
+          const ins = await client.query(
             `INSERT INTO product_custodies (product_id, user_id, stock)
              VALUES ($1, $2, $3)
              RETURNING stock`,
             [productId, userId, stock]
           );
-          newStockRow = insertStock.rows[0];
+          newStockRow = ins.rows[0];
         } else {
-          newStockRow = updateStock.rows[0];
+          newStockRow = upd.rows[0];
         }
       }
+
       await client.query("COMMIT");
-      const updatedProduct = updateProduct.rows[0];
-      const result = {
-        product: updatedProduct,
+      return res.json({
+        product: updateProduct.rows[0],
         ...(newStockRow ? { stock: newStockRow.stock } : {}),
-      };
-      return res.json(result);
+      });
     } catch (err) {
       await client.query("ROLLBACK");
-      console.error("Error actualizando producto+stock:", err);
-      return res.status(500).json({ error: "Error interno al actualizar" });
+      console.error("Error actualizando producto:", err);
+      return res
+        .status(500)
+        .json({ error: "Error interno al actualizar producto" });
     } finally {
       client.release();
     }

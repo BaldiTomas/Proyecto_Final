@@ -108,4 +108,18 @@ export async function registerSaleOnChain({
   return tx.wait();
 }
 
+export async function setProductActiveOnChain(
+  productId: number,
+  active: boolean
+): Promise<void> {
+  const signer = getSigner();
+  const contract = new ethers.Contract(
+    PRODUCT_REG_ADDRESS,
+    ProductRegistrationABI.abi,
+    signer
+  );
+  const tx = await contract.setProductActive(productId, active);
+  await tx.wait();
+}
+
 export const buyProductOnChain = registerSaleOnChain;
