@@ -8,26 +8,9 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useWeb3Store } from "@/stores/web3-store";
 import { useWeb3 } from "@/providers/web3-provider";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import {DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import {
-  User,
-  LogOut,
-  Settings,
-  Wallet,
-  Menu,
-  X,
-  Package,
-  Shield,
-  Truck,
-  FileText,
-  DollarSign,
-} from "lucide-react";
+import {User,LogOut,Settings,Wallet,Menu,X,Package,Shield,Truck,FileText,DollarSign,} from "lucide-react";
 
 export function Navbar() {
   const router = useRouter();
@@ -61,7 +44,6 @@ export function Navbar() {
   };
 
   const getNavigationItems = () => {
-    // Always include Dashboard and Products
     const items = [
       { href: "/dashboard", label: "Dashboard", icon: Package },
     ];
@@ -71,11 +53,10 @@ export function Navbar() {
         return [
           ...items,
           { href: "/reports", label: "Reportes", icon: FileText },
-          { href: "/admin", label: "Admin Panel", icon: Shield },
           { href: "/products", label: "Productos", icon: Package },
+          { href: "/admin", label: "Admin Panel", icon: Shield },
         ];
       case "distributor":
-        // Hide "Reportes" for distributors
         return [
           ...items,
           { href: "/distributor", label: "Distribución", icon: Truck },
@@ -102,7 +83,6 @@ export function Navbar() {
     <nav className="bg-slate-800 border-b border-slate-700">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <div className="flex items-center space-x-8">
             <Link href="/dashboard" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -111,7 +91,6 @@ export function Navbar() {
               <span className="text-xl font-bold text-white">TrackChain</span>
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-4">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -128,10 +107,7 @@ export function Navbar() {
               })}
             </div>
           </div>
-
-          {/* Right Side */}
           <div className="flex items-center space-x-4">
-            {/* Wallet Connection */}
             {isConnected ? (
               <div className="hidden sm:flex items-center space-x-2">
                 <Badge
@@ -161,8 +137,6 @@ export function Navbar() {
                 Conectar Wallet
               </Button>
             )}
-
-            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -214,8 +188,6 @@ export function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
               size="sm"
@@ -226,8 +198,6 @@ export function Navbar() {
             </Button>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-slate-700">
             <div className="space-y-2">
@@ -246,8 +216,6 @@ export function Navbar() {
                 );
               })}
             </div>
-
-            {/* Mobile Wallet Status */}
             {isConnected && (
               <div className="mt-4 pt-4 border-t border-slate-700">
                 <div className="flex items-center justify-between px-3 py-2">

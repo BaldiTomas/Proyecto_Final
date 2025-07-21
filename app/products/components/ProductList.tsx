@@ -67,9 +67,9 @@ export function ProductList({
                   </CardContent>
                 </Card>
               ))
-          : filtered.map((p) => (
+          : filtered.map((p, idx) => (
               <Card
-                key={p.id}
+                key={`${p.id}-${idx}`}
                 className="bg-slate-800 border-slate-700 hover:bg-slate-700/50 transition-colors"
               >
                 <CardHeader>

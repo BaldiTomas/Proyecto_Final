@@ -7,11 +7,29 @@ import { userAPI } from "@/lib/api";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,} from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
-import { Card,CardHeader,CardTitle,CardDescription,CardContent,} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 
 const roles = [
@@ -78,28 +96,27 @@ export default function UserManager() {
       return toast.error("Completa todos los campos");
 
     try {
+      if (wallet_address) {
+        await registerUserOnChain(wallet_address, name, email);
+        toast.success(
+          editMode
+            ? "Usuario actualizado en blockchain"
+            : "Usuario registrado en blockchain"
+        );
+      }
       if (editMode && editUserId) {
         await userAPI.updateUser(editUserId, newUser);
-        toast.success("Usuario actualizado");
+        toast.success("Usuario actualizado en backend");
       } else {
         await userAPI.registerUser(newUser);
         toast.success("Usuario creado en backend");
-        if (wallet_address) {
-          try {
-            await registerUserOnChain(wallet_address, name, email);
-            toast.success("Usuario registrado en blockchain");
-          } catch (err) {
-            console.error(err);
-            toast.warning("Error al registrar usuario en blockchain");
-          }
-        }
       }
-
       setIsOpen(false);
       resetForm();
       fetchUsers();
-    } catch {
-      toast.error("Error al guardar usuario");
+    } catch (err: any) {
+      console.error("Error en handleCreateOrUpdate:", err);
+      toast.error(err.message || "Error al guardar usuario");
     }
   };
 
