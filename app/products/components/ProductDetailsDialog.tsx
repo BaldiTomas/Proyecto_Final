@@ -56,14 +56,6 @@ export function ProductDetailsDialog({ product, onClose }: ProductDetailsDialogP
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <Detail label="Productor" value={product.producer_name} />
           <Detail label="Descripción" value={product.description} />
-          <Detail
-            label="Estado"
-            value={
-              <Badge className={STATUS_STYLES[statusKey]}>
-                {STATUS_LABELS[statusKey]}
-              </Badge>
-            }
-          />
           <Detail label="Categoría" value={product.category} />
           <Detail label="Stock" value={product.stock.toString()} />
           <Detail label="Origen" value={product.origin} />
@@ -72,7 +64,7 @@ export function ProductDetailsDialog({ product, onClose }: ProductDetailsDialogP
           
           {/* Enlace a Etherscan Sepolia */}
           <div>
-            <Label className="text-white">Ver en Etherscan</Label>
+            <Label className="text-white">Ver en Etherscan </Label>
             {txHash ? (
               <a
                 href={`https://sepolia.etherscan.io/tx/${txHash}`}

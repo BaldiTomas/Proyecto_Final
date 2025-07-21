@@ -121,7 +121,7 @@ const handleDeleteProduct = async (id: number) => {
       if (!res.ok) throw new Error();
       const { product } = await res.json();
       setProducts((prev) => [product, ...prev]);
-      toast.success("Producto creado con éxito");
+      await fetchProducts();
     } catch {
       toast.error("Error al crear producto");
     }

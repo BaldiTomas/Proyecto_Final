@@ -11,13 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { User, Mail, Shield, Wallet, Edit, Save, X } from "lucide-react"
+import { User, Mail, Shield, Wallet, Save, X } from "lucide-react"
 
 export default function ProfilePage() {
   const router = useRouter()
   const { user, setUser } = useAuthStore()
   const { account, isConnected } = useWeb3Store()
-  const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -30,7 +29,6 @@ export default function ProfilePage() {
     }
 
     setUser({ ...user, ...formData })
-    setIsEditing(false)
     toast.success("Perfil actualizado exitosamente")
   }
 
@@ -39,7 +37,6 @@ export default function ProfilePage() {
       name: user?.name || "",
       email: user?.email || "",
     })
-    setIsEditing(false)
   }
 
   const getRoleLabel = (role: string) => {
@@ -86,57 +83,10 @@ export default function ProfilePage() {
                     </Badge>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="border-slate-600 text-gray-300"
-                >
-                  {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-                  {isEditing ? "Cancelar" : "Editar"}
-                </Button>
+
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-white">
-                      Nombre Completo
-                    </Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="bg-slate-700 border-slate-600 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-white">
-                      Correo Electrónico
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="bg-slate-700 border-slate-600 text-white"
-                    />
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar Cambios
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancel}
-                      className="border-slate-600 text-gray-300 bg-transparent"
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <User className="w-5 h-5 text-gray-400" />
@@ -160,7 +110,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-              )}
             </CardContent>
           </Card>
 
@@ -199,26 +148,6 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Account Statistics */}
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Estadísticas de Cuenta</CardTitle>
-              <CardDescription className="text-gray-400">Resumen de tu actividad</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">12</div>
-                  <p className="text-sm text-gray-400">Productos Rastreados</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">5</div>
-                  <p className="text-sm text-gray-400">Transacciones</p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
