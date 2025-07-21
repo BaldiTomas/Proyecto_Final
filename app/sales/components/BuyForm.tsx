@@ -1,0 +1,186 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { buyProductOnChain } from "@/lib/contracts";
+import { Product, User } from "../../types";
+
+interface BuyFormProps {
+  apiBase: string;
+  user: User;
+  token: string;
+  users: User[];
+  reloadData: () => void;
+}
+
+export default function BuyForm({ apiBase, user, token, users, reloadData }: BuyFormProps) {
+  const [producerId, setProducerId] = useState<number>();
+  const [producerProducts, setProducerProducts] = useState<Product[]>([]);
+  const [buyProductId, setBuyProductId] = useState<number>();
+  const [buyQty, setBuyQty] = useState("");
+  const [buyPrice, setBuyPrice] = useState("");
+  const [buyNotes, setBuyNotes] = useState("");
+
+  useEffect(() => {
+    if (!producerId) {
+      setProducerProducts([]);
+      setBuyProductId(undefined);
+      return;
+    }
+    fetch(`${apiBase}/products?custody_id=${producerId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        setProducerProducts(j.products || []);
+        setBuyProductId(undefined);
+      })
+      .catch(() => setProducerProducts([]));
+  }, [producerId, apiBase, token]);
+
+  const producers = users.filter((u) => u.role === "producer");
+
+  async function handleBuy(e: React.FormEvent) {
+    e.preventDefault();
+    if (!producerId || !buyProductId || !buyQty || !buyPrice)
+      return toast.error("Completa todos los campos de compra");
+    if (producerId === user.id) return toast.error("No puedes comprar a ti mismo");
+
+    try {
+      await buyProductOnChain({
+        productId: buyProductId,
+        toCustodyId: user.id,
+        quantity: +buyQty,
+        price: +buyPrice,
+      });
+      toast.success("Compra registrada en blockchain");
+    } catch (err: any) {
+      console.error("Error on-chain:", err);
+      return toast.error("Error al registrar la compra on-chain: " + err.message);
+    }
+
+    try {
+      const res = await fetch(`${apiBase}/transactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_id: buyProductId,
+          seller_id: producerId,
+          buyer_email: user.email,
+          quantity: +buyQty,
+          price_per_unit: +buyPrice,
+          location: "",
+          notes: buyNotes,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Compra fallida");
+      }
+      const { message } = await res.json();
+      toast.success(message);
+      setProducerId(undefined);
+      setProducerProducts([]);
+      setBuyProductId(undefined);
+      setBuyQty("");
+      setBuyPrice("");
+      setBuyNotes("");
+      reloadData();
+    } catch (e: any) {
+      console.error("Error API:", e);
+      toast.error("Error al guardar la compra: " + e.message);
+    }
+  }
+
+  return (
+    <Card className="bg-slate-800 border-slate-700">
+      <CardHeader>
+        <CardTitle className="text-lg text-white">Registrar Compra</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <form onSubmit={handleBuy} className="space-y-4">
+          <div>
+            <Label className="text-gray-200">Productor</Label>
+            <Select value={producerId?.toString() || ""} onValueChange={(v) => setProducerId(+v)}>
+              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                <SelectValue placeholder="Selecciona un productor" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 text-white border-slate-700">
+                {producers.map((u) => (
+                  <SelectItem key={u.id} value={u.id.toString()}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-gray-200">Producto</Label>
+            <Select
+              value={buyProductId?.toString() || ""}
+              onValueChange={(v) => setBuyProductId(+v)}
+              disabled={!producerId}
+            >
+              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                <SelectValue placeholder={producerId ? "Selecciona un producto" : "Elige productor primero"} />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 text-white border-slate-700">
+                {producerProducts.length > 0 ? (
+                  producerProducts.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.name} (Stock: {p.stock})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no_products" disabled>
+                    {producerId ? "No hay productos" : ""}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-gray-200">Cantidad</Label>
+            <Input
+              type="number"
+              min={1}
+              value={buyQty}
+              onChange={(e) => setBuyQty(e.target.value)}
+              className="bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+          <div>
+            <Label className="text-gray-200">Precio</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min={0}
+              value={buyPrice}
+              onChange={(e) => setBuyPrice(e.target.value)}
+              className="bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+          <div>
+            <Label className="text-gray-200">Notas</Label>
+            <Input
+              value={buyNotes}
+              onChange={(e) => setBuyNotes(e.target.value)}
+              className="bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+            Comprar
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
