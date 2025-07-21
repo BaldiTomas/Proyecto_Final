@@ -163,7 +163,7 @@ export default function UserManager() {
               Agregar Usuario
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogContent className="bg-slate-800 border-slate-700 max-h-[80vh] overflow-auto">
             <DialogHeader>
               <DialogTitle className="text-white">
                 {editMode ? "Editar Usuario" : "Crear Usuario"}

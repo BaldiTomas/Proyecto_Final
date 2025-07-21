@@ -64,7 +64,7 @@ export default function PurchasesTab({
                         Crear Envío
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-slate-800 text-white border-slate-700">
+                    <DialogContent className="bg-slate-800 border-slate-700 max-h-[80vh] overflow-auto">
                       <DialogHeader>
                         <DialogTitle>Confirmar Envío</DialogTitle>
                         <DialogDescription>

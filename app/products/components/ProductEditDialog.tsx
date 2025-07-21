@@ -126,7 +126,7 @@ export function ProductEditDialog({
           <Edit className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-slate-800 border-slate-700 space-y-4">
+      <DialogContent className="bg-slate-800 border-slate-700 max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-white">Editar Producto</DialogTitle>
         </DialogHeader>
