@@ -38,6 +38,12 @@
           "internalType": "string",
           "name": "email",
           "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "userId",
+          "type": "uint256"
         }
       ],
       "name": "UserRegistered",
@@ -85,6 +91,25 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "name": "getUserId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_userAddress",
           "type": "address"
         }
@@ -95,6 +120,19 @@
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextUserId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -158,6 +196,29 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "_userAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "_name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "_email",
+          "type": "string"
+        }
+      ],
+      "name": "updateUserByAdmin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "",
           "type": "address"
         }
@@ -178,6 +239,11 @@
           "internalType": "bool",
           "name": "isActive",
           "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "userId",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",

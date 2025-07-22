@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\Tomas\\Desktop\\prueba 2\\backend\\contracts\\ProductRegistrationContract.sol": {
-      "lastModificationDate": 1752955345359,
+      "lastModificationDate": 1753213583239,
       "contentHash": "cc3bfd2c958326a702d44dd4a988501c",
       "sourceName": "contracts/ProductRegistrationContract.sol",
       "solcConfig": {
@@ -40,8 +40,8 @@
       ]
     },
     "C:\\Users\\Tomas\\Desktop\\prueba 2\\backend\\contracts\\UserRegistrationContract.sol": {
-      "lastModificationDate": 1752950688608,
-      "contentHash": "01174c2cc2adcc897b76a56c219a5538",
+      "lastModificationDate": 1753220030937,
+      "contentHash": "a2a180c97530afec62a76edf34287e87",
       "sourceName": "contracts/UserRegistrationContract.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -76,7 +76,7 @@
       ]
     },
     "C:\\Users\\Tomas\\Desktop\\prueba 2\\backend\\contracts\\SalesContract.sol": {
-      "lastModificationDate": 1752955533692,
+      "lastModificationDate": 1753213583242,
       "contentHash": "98be82804c50825c482a3115d58180fe",
       "sourceName": "contracts/SalesContract.sol",
       "solcConfig": {

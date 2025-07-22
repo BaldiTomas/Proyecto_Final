@@ -43,6 +43,22 @@ export async function registerUserOnChain(
   await tx.wait();
 }
 
+export async function adminUpdateUserOnChain(
+  userAddress: string,
+  name: string,
+  email: string
+) {
+  const signer = getSigner();
+  const contract = new ethers.Contract(
+    USER_REG_ADDRESS,
+    UserRegistrationABI.abi,
+    signer
+  );
+  const tx = await contract.updateUserByAdmin(userAddress, name, email);
+  await tx.wait();
+}
+
+
 export async function registerProductOnChain(
   name: string,
   metadataHash: string,

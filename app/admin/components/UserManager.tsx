@@ -1,34 +1,17 @@
 // app/admin/UserManager.tsx
 "use client";
 
-import { registerUserOnChain } from "@/lib/contracts";
+import { registerUserOnChain, adminUpdateUserOnChain } from "@/lib/contracts";
 import { useEffect, useState } from "react";
 import { userAPI } from "@/lib/api";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
+import {Card,CardHeader,CardTitle,CardDescription,CardContent,
 } from "@/components/ui/card";
 import { toast } from "sonner";
 
@@ -96,12 +79,13 @@ export default function UserManager() {
 
     try {
       if (wallet_address) {
-        await registerUserOnChain(wallet_address, name, email);
-        toast.success(
-          editMode
-            ? "Usuario actualizado en blockchain"
-            : "Usuario registrado en blockchain"
-        );
+        if (editMode) {
+          await adminUpdateUserOnChain(wallet_address, name, email);
+          toast.success("Usuario actualizado en Blockchain");
+        } else {
+          await registerUserOnChain(wallet_address, name, email);
+          toast.success("Usuario creado en Blockchain");
+        }
       }
       if (editMode && editUserId) {
         await userAPI.updateUser(editUserId, newUser);
@@ -110,6 +94,8 @@ export default function UserManager() {
         await userAPI.registerUser(newUser);
         toast.success("Usuario creado en backend");
       }
+
+
       setIsOpen(false);
       resetForm();
       fetchUsers();
@@ -250,15 +236,14 @@ export default function UserManager() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg text-white">{u.name}</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    {u.email}
+                  <CardDescription className="text-gray-400">                {u.email}
                   </CardDescription>
                 </div>
                 <Badge
                   className={`text-sm ${
                     u.is_active
                       ? "bg-green-900/20 text-green-400 border-green-600"
-                      : "bg-red-900/20 text-red-400 border-red-600"
+                      : "bg-red-900/20 text-red-400 border-red"
                   }`}
                 >
                   {u.is_active ? "Activo" : "Inactivo"}

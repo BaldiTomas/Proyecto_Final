@@ -47,6 +47,17 @@ contract UserRegistrationContract {
         emit UserUpdated(msg.sender, _name, _email);
     }
 
+    function updateUserByAdmin(
+        address _userAddress,
+        string memory _name,
+        string memory _email
+    ) public onlyOwner {
+        require(users[_userAddress].isActive, "User is not active");
+        users[_userAddress].name  = _name;
+        users[_userAddress].email = _email;
+        emit UserUpdated(_userAddress, _name, _email);
+    }
+
     function deactivateUser(address _userAddress) public onlyOwner {
         require(users[_userAddress].isActive, "User is not active");
         users[_userAddress].isActive = false;
