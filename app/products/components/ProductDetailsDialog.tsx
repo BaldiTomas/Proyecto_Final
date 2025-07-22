@@ -33,6 +33,7 @@ interface Product {
   is_active: boolean;
   status?: string;
   created_at?: string;
+  price?: number | string;
 }
 
 interface ProductDetailsDialogProps {
@@ -61,8 +62,7 @@ export function ProductDetailsDialog({ product, onClose }: ProductDetailsDialogP
           <Detail label="Origen" value={product.origin} />
           <Detail label="Fecha de Producción" value={product.production_date.split("T")[0]} />
           <Detail label="Fecha de Creación" value={product.created_at?.split("T")[0] ?? "-"} />
-          
-          {/* Enlace a Etherscan Sepolia */}
+          <Detail label="Precio Unitario (USD)" value={product.price !== undefined ? `$${Number(product.price).toFixed(2)}` : "-"} />
           <div>
             <Label className="text-white">Ver en Etherscan </Label>
             {txHash ? (

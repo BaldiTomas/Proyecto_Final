@@ -2,16 +2,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {Dialog,DialogTrigger,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog";
+import {Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem,} from "@/components/ui/select";
+import {Select, SelectTrigger, SelectValue, SelectContent, SelectItem,} from "@/components/ui/select";
 import { Edit } from "lucide-react";
 import { categories } from "./categories";
 import { useAuthStore } from "@/stores/auth-store";
-import {updateProductOnChain,generateMetadataHash,} from "@/lib/products";
+import {updateProductOnChain, generateMetadataHash,} from "@/lib/products";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
@@ -25,6 +25,7 @@ interface ProductPayload {
   is_active: boolean;
   metadata_hash?: string | null;
   stock: number;
+  price: number;
 }
 
 interface Props {
@@ -54,6 +55,7 @@ export function ProductEditDialog({
     is_active: true,
     metadata_hash: null,
     stock: 0,
+    price: 0,
   });
 
   useEffect(() => {
@@ -86,7 +88,8 @@ export function ProductEditDialog({
       const payload = {
         ...rest,
         metadata_hash: metadataHash,
-        stock: (formData as any).stock
+        stock: (formData as any).stock,
+        price: formData.price,
       };
 
       const res = await fetch(`${API_BASE_URL}/products/${id}`, {
@@ -194,6 +197,17 @@ export function ProductEditDialog({
             min={0}
             value={formData.stock}
             onChange={(e) => handleChange("stock", Number(e.target.value))}
+            className="bg-slate-700 border-slate-600 text-white"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-white">Precio</Label>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={formData.price}
+            onChange={(e) => handleChange("price", Number(e.target.value))}
             className="bg-slate-700 border-slate-600 text-white"
           />
         </div>

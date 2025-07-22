@@ -24,6 +24,7 @@ export interface Product {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  price?: number | string;
 }
 
 export interface ProductWithProducer extends Product {

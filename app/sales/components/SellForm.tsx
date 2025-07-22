@@ -23,8 +23,6 @@ export default function SellForm({ apiBase, user, token, users, products, reload
   const [sellProductId, setSellProductId] = useState<number>();
   const [buyerId, setBuyerId] = useState<number>();
   const [sellQty, setSellQty] = useState("");
-  const [sellPrice, setSellPrice] = useState("");
-  const [currency, setCurrency] = useState("USD");
   const [sellNotes, setSellNotes] = useState("");
 
   const sellOptions = products.filter(
@@ -33,13 +31,15 @@ export default function SellForm({ apiBase, user, token, users, products, reload
   );
   const buyers = users.filter((u) => u.id !== user.id && u.role !== "admin");
 
+  const selectedProduct = sellOptions.find((p) => p.id === sellProductId);
+
   async function handleSell(e: React.FormEvent) {
     e.preventDefault();
-    if (!sellProductId || !buyerId || !sellQty || !sellPrice)
+    if (!sellProductId || !buyerId || !sellQty)
       return toast.error("Completa todos los campos de venta");
     if (buyerId === user.id) return toast.error("No puedes vender a ti mismo");
 
-    const prod = products.find(
+    const prod = sellOptions.find(
       (p) =>
         p.id === sellProductId &&
         (p.custody_user_id === user.id || p.current_custody_id === user.id)
@@ -47,12 +47,14 @@ export default function SellForm({ apiBase, user, token, users, products, reload
     if (!prod) return toast.error("Producto no disponible");
     if (+sellQty > prod.stock) return toast.error(`Solo tienes ${prod.stock} unidades`);
 
+    const price = selectedProduct?.price ?? 0;
+
     try {
       await registerSaleOnChain({
         productId: sellProductId,
         toCustodyId: buyerId,
         quantity: +sellQty,
-        price: +sellPrice,
+        price: +price,
       });
       toast.success("Venta registrada en blockchain");
     } catch (err: any) {
@@ -71,7 +73,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
           product_id: sellProductId,
           buyer_email: users.find((u) => u.id === buyerId)?.email,
           quantity: +sellQty,
-          price_per_unit: +sellPrice,
+          price_per_unit: +price,
           location: "",
           notes: sellNotes,
         }),
@@ -85,8 +87,6 @@ export default function SellForm({ apiBase, user, token, users, products, reload
       setSellProductId(undefined);
       setBuyerId(undefined);
       setSellQty("");
-      setSellPrice("");
-      setCurrency("USD");
       setSellNotes("");
       reloadData();
     } catch (e: any) {
@@ -143,27 +143,12 @@ export default function SellForm({ apiBase, user, token, users, products, reload
             />
           </div>
           <div>
-            <Label className="text-gray-200">Precio por Unidad</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min={0}
-              value={sellPrice}
-              onChange={(e) => setSellPrice(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-200">Moneda</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 text-white border-slate-700">
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="ARS">ARS</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-gray-200">Precio Unitario (USD)</Label>
+            <div className="bg-slate-700 border-slate-600 text-white px-3 py-2 rounded">
+              {selectedProduct
+                ? `$${Number(selectedProduct.price).toFixed(2)}`
+                : "-"}
+            </div>
           </div>
           <div>
             <Label className="text-gray-200">Notas</Label>

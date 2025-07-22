@@ -23,7 +23,6 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
   const [producerProducts, setProducerProducts] = useState<Product[]>([]);
   const [buyProductId, setBuyProductId] = useState<number>();
   const [buyQty, setBuyQty] = useState("");
-  const [buyPrice, setBuyPrice] = useState("");
   const [buyNotes, setBuyNotes] = useState("");
 
   useEffect(() => {
@@ -44,19 +43,22 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
   }, [producerId, apiBase, token]);
 
   const producers = users.filter((u) => u.role === "producer");
+  const selectedProduct = producerProducts.find((p) => p.id === buyProductId);
 
   async function handleBuy(e: React.FormEvent) {
     e.preventDefault();
-    if (!producerId || !buyProductId || !buyQty || !buyPrice)
+    if (!producerId || !buyProductId || !buyQty)
       return toast.error("Completa todos los campos de compra");
     if (producerId === user.id) return toast.error("No puedes comprar a ti mismo");
+
+    const price = selectedProduct?.price ?? 0;
 
     try {
       await buyProductOnChain({
         productId: buyProductId,
         toCustodyId: user.id,
         quantity: +buyQty,
-        price: +buyPrice,
+        price: +price,
       });
       toast.success("Compra registrada en blockchain");
     } catch (err: any) {
@@ -76,7 +78,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
           seller_id: producerId,
           buyer_email: user.email,
           quantity: +buyQty,
-          price_per_unit: +buyPrice,
+          price_per_unit: +price,
           location: "",
           notes: buyNotes,
         }),
@@ -91,7 +93,6 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
       setProducerProducts([]);
       setBuyProductId(undefined);
       setBuyQty("");
-      setBuyPrice("");
       setBuyNotes("");
       reloadData();
     } catch (e: any) {
@@ -158,15 +159,12 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
             />
           </div>
           <div>
-            <Label className="text-gray-200">Precio</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min={0}
-              value={buyPrice}
-              onChange={(e) => setBuyPrice(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white"
-            />
+            <Label className="text-gray-200">Precio Unitario (USD)</Label>
+            <div className="bg-slate-700 border-slate-600 text-white px-3 py-2 rounded">
+              {selectedProduct
+                ? `$${Number(selectedProduct.price).toFixed(2)}`
+                : "-"}
+            </div>
           </div>
           <div>
             <Label className="text-gray-200">Notas</Label>

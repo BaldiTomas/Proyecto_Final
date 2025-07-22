@@ -19,9 +19,10 @@ router.post(
       stock,
       blockchain_hash,
       metadata_hash,
+      price,
     } = req.body;
     const producer_id = req.user.id;
-    console.log(req.body)
+
     if (
       !name ||
       !description ||
@@ -30,11 +31,12 @@ router.post(
       !production_date ||
       stock == null ||
       blockchain_hash == null ||
-      metadata_hash == null
+      metadata_hash == null ||
+      price == null
     ) {
       return res
         .status(400)
-        .json({ error: "Todos los campos, incluidos ambos hashes, son requeridos" });
+        .json({ error: "Todos los campos, incluidos ambos hashes y el precio, son requeridos" });
     }
 
     const client = await pool.connect();
@@ -43,8 +45,8 @@ router.post(
       const prodRes = await client.query(
         `INSERT INTO products
            (name, description, category, producer_id, origin, production_date,
-            blockchain_hash, metadata_hash, is_active)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+            blockchain_hash, metadata_hash, is_active, price)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, $9)
          RETURNING *`,
         [
           name,
@@ -55,6 +57,7 @@ router.post(
           production_date,
           blockchain_hash,
           metadata_hash,
+          price,
         ]
       );
       const product = prodRes.rows[0];
@@ -77,7 +80,6 @@ router.post(
     }
   }
 );
-
 
 router.get(
   "/",
@@ -236,7 +238,6 @@ router.put(
     try {
       await client.query("BEGIN");
 
-      // 1) Si sólo vienen cambios en is_active => soft‑delete ligero
       if (
         Object.keys(req.body).length === 1 &&
         req.body.hasOwnProperty("is_active")
@@ -266,7 +267,6 @@ router.put(
         });
       }
 
-      // 2) Si vienen más campos => lógica completa de actualización
       const {
         name,
         description,
@@ -276,9 +276,9 @@ router.put(
         metadata_hash,
         is_active,
         stock,
+        price,
       } = req.body;
 
-      // validación de campos requeridos
       if (
         !name ||
         !description ||
@@ -292,7 +292,6 @@ router.put(
           .json({ error: "Faltan campos requeridos para el producto." });
       }
 
-      // actualiza tabla products
       const updateProduct = await client.query(
         `
         UPDATE products
@@ -303,8 +302,9 @@ router.put(
                production_date = $5,
                metadata_hash   = COALESCE($6, metadata_hash),
                is_active       = COALESCE($7, is_active),
+               price           = COALESCE($8, price), -- Aquí
                updated_at      = CURRENT_TIMESTAMP
-         WHERE id = $8
+         WHERE id = $9
          RETURNING *
         `,
         [
@@ -315,6 +315,7 @@ router.put(
           production_date,
           metadata_hash || null,
           typeof is_active === "boolean" ? is_active : null,
+          price !== undefined ? price : null,
           productId,
         ]
       );
@@ -323,7 +324,6 @@ router.put(
         return res.status(404).json({ error: "Producto no encontrado" });
       }
 
-      // si viene stock, actualiza en product_custodies
       let newStockRow = null;
       if (typeof stock === "number") {
         const userId = req.user.id;

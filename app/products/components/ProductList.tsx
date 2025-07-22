@@ -46,9 +46,6 @@ export function ProductList({
             className="pl-10 bg-slate-800 border-slate-700 text-white"
           />
         </div>
-        <Button variant="outline" className="border-slate-600 text-gray-300 bg-transparent">
-          <Filter className="w-4 h-4 mr-2" /> Filtros
-        </Button>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

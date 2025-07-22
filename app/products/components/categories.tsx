@@ -1,6 +1,6 @@
 export const categories = [
-  { value: "alimentos", label: "alimentos" },
-  { value: "farmaceutica", label: "farmaceutica" },
+  { value: "Alimentos", label: "Alimentos" },
+  { value: "Farmaceutica", label: "Farmaceutica" },
   { value: "Electronica", label: "Electronica" },
   { value: "Arte", label: "Arte" },
   { value: "Otros", label: "Otros" },

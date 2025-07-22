@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import {Dialog,DialogTrigger,DialogContent,DialogHeader,DialogTitle,} from "@/components/ui/dialog";
+import {
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem,} from "@/components/ui/select";
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { categories } from "./categories";
-import {registerProductOnChain,generateMetadataHash,} from "@/lib/contracts";
+import {
+  registerProductOnChain, generateMetadataHash,
+} from "@/lib/contracts";
 import { useAuthStore } from "@/stores/auth-store";
 
 interface NewProduct {
@@ -20,6 +26,7 @@ interface NewProduct {
   origin: string;
   production_date: string;
   stock: number;
+  price: number; // Nuevo campo
 }
 
 interface Props {
@@ -39,6 +46,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
     origin: "",
     production_date: new Date().toISOString().slice(0, 10),
     stock: 0,
+    price: 0, // Nuevo campo
   });
 
   if (!(userRole === "producer" || userRole === "admin")) return null;
@@ -64,6 +72,12 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
       label: "Stock",
       inputProps: { type: "number", min: 0 },
     },
+    {
+      key: "price",
+      type: "input",
+      label: "Precio Unitario (USD)",
+      inputProps: { type: "number", min: 0, step: "0.01" },
+    },
   ];
 
   const handleCreate = async () => {
@@ -77,6 +91,10 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
     }
     if (!newProduct.category) {
       toast.error("Selecciona una categoría");
+      return;
+    }
+    if (isNaN(Number(newProduct.price)) || Number(newProduct.price) <= 0) {
+      toast.error("Ingresa un precio válido");
       return;
     }
 
@@ -103,6 +121,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
         origin: "",
         production_date: new Date().toISOString().slice(0, 10),
         stock: 0,
+        price: 0,
       });
     } catch (err: any) {
       console.error(err);
