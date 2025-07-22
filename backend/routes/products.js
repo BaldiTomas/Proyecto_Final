@@ -89,40 +89,62 @@ router.get(
     const isAdmin = req.user.role === 'admin';
 
     try {
+      let query, params;
       if (isAdmin) {
-        const query = `
+        query = `
           SELECT 
             p.*, 
             pc.stock, 
             pc.user_id AS custody_user_id,
-            u.name AS producer_name
+            u.name AS producer_name,
+            s.status AS shipment_status
           FROM products p
           JOIN product_custodies pc ON pc.product_id = p.id
           LEFT JOIN users u ON p.producer_id = u.id
+          LEFT JOIN LATERAL (
+              SELECT status
+              FROM shipments
+              WHERE product_id = p.id
+              ORDER BY created_at DESC, id DESC
+              LIMIT 1
+          ) s ON true
           WHERE pc.stock > 0 AND p.is_active = TRUE
           ORDER BY p.created_at DESC
           LIMIT $1 OFFSET $2
         `;
-        const result = await pool.query(query, [limit, offset]);
-        res.json({ products: result.rows, total: result.rows.length, limit: Number(limit), offset: Number(offset) });
+        params = [limit, offset];
       } else {
         const userId = custody_id || req.user.id;
-        const query = `
+        query = `
           SELECT 
             p.*, 
             pc.stock, 
             pc.user_id AS custody_user_id,
-            u.name AS producer_name
+            u.name AS producer_name,
+            s.status AS shipment_status
           FROM products p
           JOIN product_custodies pc ON pc.product_id = p.id
           LEFT JOIN users u ON p.producer_id = u.id
+          LEFT JOIN LATERAL (
+              SELECT status
+              FROM shipments
+              WHERE product_id = p.id
+              ORDER BY created_at DESC, id DESC
+              LIMIT 1
+          ) s ON true
           WHERE pc.user_id = $1 AND pc.stock > 0 AND p.is_active = TRUE
           ORDER BY p.created_at DESC
           LIMIT $2 OFFSET $3
         `;
-        const result = await pool.query(query, [userId, limit, offset]);
-        res.json({ products: result.rows, total: result.rows.length, limit: Number(limit), offset: Number(offset) });
+        params = [userId, limit, offset];
       }
+      const result = await pool.query(query, params);
+      res.json({
+        products: result.rows,
+        total: result.rows.length,
+        limit: Number(limit),
+        offset: Number(offset),
+      });
     } catch (err) {
       res.status(500).json({ error: "Error interno del servidor" });
     }

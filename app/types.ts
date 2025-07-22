@@ -25,6 +25,7 @@ export interface Product {
   created_at?: string;
   updated_at?: string;
   price?: number | string;
+  shipment_status?: "in_transit" | "delivered" | "cancelled" | "pending" | string; // <-- AÑADIDO
 }
 
 export interface ProductWithProducer extends Product {
