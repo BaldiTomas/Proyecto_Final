@@ -174,7 +174,16 @@ export default function ActivityPanel() {
                   {pageItems.map(act => (
                     <TableRow key={`${act.id}-${act.created_at}`}>
                       <TableCell>
-                        {new Date(act.created_at).toLocaleString()}
+                      {new Date(act.created_at).toLocaleString("es-AR", {
+                        timeZone: "America/Argentina/Buenos_Aires",
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      })}
                       </TableCell>
                       <TableCell>{act.user_name ?? "—"}</TableCell>
                       <TableCell>{act.action}</TableCell>
