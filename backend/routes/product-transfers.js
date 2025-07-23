@@ -18,8 +18,6 @@ router.put(
 
     try {
       await pool.query("BEGIN");
-
-      // Traemos la transferencia (y bloqueamos para evitar concurrencia)
       const { rows } = await pool.query(
         `SELECT product_id, from_user_id, to_user_id, quantity, status AS current_status
            FROM public.product_transfers
@@ -31,18 +29,13 @@ router.put(
         return res.status(404).json({ error: "Transferencia no encontrada." });
       }
       const { product_id, from_user_id, to_user_id, quantity, current_status } = rows[0];
-
-      // Verificar si la transferencia ya no está pendiente
       if (current_status !== "pending") {
         await pool.query("ROLLBACK");
         return res
           .status(400)
           .json({ error: `La transferencia ya fue ${current_status}. No se puede modificar.` });
       }
-
-      // Procesar la transferencia si es "completed"
       if (status === "completed") {
-        // 1) Restar stock al remitente
         const updFrom = await pool.query(
           `UPDATE public.products
            SET stock = stock - $1
@@ -55,15 +48,12 @@ router.put(
             .status(400)
             .json({ error: "Stock insuficiente o custodia inválida del remitente." });
         }
-
-        // 2) Sumar stock al destinatario (INSERT o UPDATE según si ya tiene el producto)
         const exists = await pool.query(
           `SELECT 1 FROM public.products
            WHERE id = $1 AND current_custody_id = $2`,
           [product_id, to_user_id]
         );
         if (exists.rows.length) {
-          // Si el destinatario ya tiene el producto, actualiza su stock
           await pool.query(
             `UPDATE public.products
              SET stock = stock + $1
@@ -71,7 +61,6 @@ router.put(
             [quantity, product_id, to_user_id]
           );
         } else {
-          // Si el destinatario no tiene el producto, crea una nueva entrada de producto para él
           const orig = await pool.query(
             `SELECT name, description, price, sku, image_url
              FROM public.products WHERE id = $1`,
@@ -90,8 +79,6 @@ router.put(
           );
         }
       }
-
-      // Actualizar el estado de la transferencia
       await pool.query(
         `UPDATE public.product_transfers
          SET status = $1, updated_at = CURRENT_TIMESTAMP

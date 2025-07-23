@@ -3,8 +3,6 @@ const router = express.Router();
 const pool = require("../db");
 const { authenticateToken, authorizeRole } = require("../middlewares/auth");
 
-// Stats generales (solo admin)
-// GET /api/stats/admin
 router.get(
   "/admin",
   authenticateToken,
@@ -43,8 +41,6 @@ router.get(
   }
 );
 
-// Stats distribuidor
-// GET /api/stats/distributor
 router.get(
   "/distributor",
   authenticateToken,
@@ -84,13 +80,9 @@ router.get(
   }
 );
 
-// Stats para Vendedor (Mejorado: productos en custodia reales)
-// GET /api/stats/seller-stats
 router.get('/seller-stats', authenticateToken, async (req, res) => {
   try {
     const sellerId = req.user.id;
-
-    // Ventas totales y montos
     const salesStatsQuery = `
       SELECT
         COUNT(id) AS total_sales_transactions,
@@ -102,7 +94,6 @@ router.get('/seller-stats', authenticateToken, async (req, res) => {
     const salesStatsResult = await pool.query(salesStatsQuery, [sellerId]);
     const sellerSalesStats = salesStatsResult.rows[0];
 
-    // Productos en custodia REAL (tabla product_custodies)
     const productCustodyQuery = `
       SELECT 
         p.id,
@@ -115,8 +106,6 @@ router.get('/seller-stats', authenticateToken, async (req, res) => {
     `;
     const productCustodyResult = await pool.query(productCustodyQuery, [sellerId]);
     const productsInCustody = productCustodyResult.rows;
-
-    // Historial: acciones recientes del usuario como actor
     const productHistoryQuery = `
       SELECT
         ph.id,

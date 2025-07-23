@@ -1,6 +1,5 @@
 const pool = require('../db');
 
-// Crear transacción
 exports.createTransaction = async (req, res) => {
   try {
     const { product_id, buyer_email, quantity, price_per_unit, location, notes } = req.body;
@@ -60,7 +59,6 @@ exports.createTransaction = async (req, res) => {
   }
 };
 
-// Listar transacciones
 exports.listTransactions = async (req, res) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query;

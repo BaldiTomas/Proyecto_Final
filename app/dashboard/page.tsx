@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useWeb3 } from "@/providers/web3-provider"
 import { Navbar } from "@/components/layout/navbar"
-import { Wallet, Activity, Package, Users, Plus, Clock, CheckCircle, AlertCircle, Truck, ShoppingCart, BarChart, HandCoins, Boxes } from "lucide-react"
+import { Wallet, Activity, Package, Users, Plus, Clock, CheckCircle, AlertCircle, Truck, ShoppingCart, HandCoins, Boxes } from "lucide-react"
 import { toast } from "sonner"
 
 export default function DashboardPage() {

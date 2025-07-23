@@ -108,17 +108,6 @@ export default function LoginPage() {
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-slate-700 rounded-lg">
-              <h3 className="text-sm font-medium text-white mb-2">Usuarios de Prueba:</h3>
-              <div className="space-y-1 text-xs text-gray-300">
-                <p>Admin: admin@trackchain.com / admin123</p>
-                <p>Productor: productor@trackchain.com / productor123</p>
-                <p>Distribuidor: distribuidor@trackchain.com / distribuidor123</p>
-                <p>Vendedor: vendedor@trackchain.com / vendedor123</p>
-                <p>Usuario: usuario@trackchain.com / usuario123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

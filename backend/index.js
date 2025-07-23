@@ -5,7 +5,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
-// Rutas
 const authRoutes        = require("./routes/auth");
 const userRoutes        = require("./routes/users");
 const productRoutes     = require("./routes/products");
@@ -17,7 +16,6 @@ const productTransfersRouter = require('./routes/product-transfers');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middlewares
 app.use(helmet());
 app.use(
   cors({
@@ -36,7 +34,6 @@ app.use(
   })
 );
 
-// Monta tus rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", userRoutes);
 app.use("/api/products", productRoutes);
@@ -45,18 +42,15 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/distributor/transfers", productTransfersRouter);
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });
 
-// Global error handler
 app.use((err, res, ) => {
   console.error("Error no manejado:", err);
   res.status(err.status || 500).json({ error: err.message || "Error interno del servidor" });
 });
 
-// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en puerto ${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || "development"}`);

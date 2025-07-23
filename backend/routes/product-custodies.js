@@ -9,7 +9,6 @@ router.get("/", authenticateToken, async (req, res) => {
   if (!user_id) return res.status(400).json({ error: "user_id es requerido" });
 
   try {
-    // Trae todas las custodias del usuario, junto a info del producto
     const data = await pool.query(`
       SELECT
         pc.product_id,

@@ -32,7 +32,6 @@ exports.getAdminStats = async (req, res) => {
   }
 };
 
-// Stats distribuidor
 exports.getDistributorStats = async (req, res) => {
   try {
     const [inTransit, delivered, pending, custody] = await Promise.all([

@@ -71,11 +71,8 @@ const handleDeleteProduct = async (id: number) => {
       return;
     }
     try {
-      // 1) On‑chain
       await setProductActiveOnChain(id, false);
       toast.success("Producto marcado inactivo en blockchain");
-
-      // 2) Backend (soft‑delete)
       const res = await fetch(`http://localhost:3001/api/products/${id}`, {
         method: "PUT",
         headers: {
@@ -159,7 +156,6 @@ const handleDeleteProduct = async (id: number) => {
               Gestiona y rastrea tus productos de la cadena de suministro
             </p>
           </div>
-          {/* Ahora pasamos userRole y onCreate */}
           <ProductCreateDialog
             userRole={user.role}
             onCreate={handleCreateProduct}

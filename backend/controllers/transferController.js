@@ -1,6 +1,5 @@
 const pool = require('../db');
 
-// Iniciar transferencia
 exports.createTransfer = async (req, res) => {
   try {
     const { product_id, to_user_email, quantity, notes } = req.body;
@@ -64,7 +63,6 @@ exports.createTransfer = async (req, res) => {
   }
 };
 
-// Listar transferencias
 exports.listTransfers = async (req, res) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query;
@@ -97,7 +95,6 @@ exports.listTransfers = async (req, res) => {
   }
 };
 
-// Completar transferencia
 exports.completeTransfer = async (req, res) => {
   try {
     const transferId = req.params.id;

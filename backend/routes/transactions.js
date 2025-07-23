@@ -3,7 +3,6 @@ const router = express.Router();
 const pool = require("../db");
 const { authenticateToken, authorizeRole } = require("../middlewares/auth");
 
-// Crear transacción de venta (mueve stock/custodia en product_custodies)
 router.post(
   "/",
   authenticateToken,
@@ -17,8 +16,6 @@ router.post(
       }
 
       await client.query("BEGIN");
-
-      // 1. Buscar comprador
       const buyerRes = await client.query(
         "SELECT id FROM users WHERE email = $1 AND is_active = TRUE",
         [buyer_email]
@@ -28,8 +25,6 @@ router.post(
       const buyer_id = buyerRes.rows[0].id;
       const seller_id = req.body.seller_id || req.user.id;
       const total_amount = quantity * price_per_unit;
-
-      // 2. Verificar stock del vendedor en product_custodies
       const pcRes = await client.query(
         "SELECT stock FROM product_custodies WHERE product_id = $1 AND user_id = $2 FOR UPDATE",
         [product_id, seller_id]
@@ -41,13 +36,11 @@ router.post(
       if (currentStock < parseInt(quantity, 10))
         return res.status(400).json({ error: `Stock insuficiente: tienes ${currentStock}` });
 
-      // 3. Descontar stock al vendedor
       await client.query(
         "UPDATE product_custodies SET stock = stock - $1 WHERE product_id = $2 AND user_id = $3",
         [quantity, product_id, seller_id]
       );
 
-      // 4. Sumar stock al comprador (o crear custodia si no existe)
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
          VALUES ($1, $2, $3)
@@ -56,7 +49,6 @@ router.post(
         [product_id, buyer_id, quantity]
       );
 
-      // 5. Registrar la transacción de venta
       const { rows: insert } = await client.query(
         `INSERT INTO sale_transactions 
           (product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes)
@@ -64,8 +56,6 @@ router.post(
         [product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes]
       );
       const transactionId = insert[0].id;
-
-      // 6. Registrar logs e historial
       await Promise.all([
         client.query(
           "INSERT INTO product_history (product_id, actor_id, action, location, notes) VALUES ($1,$2,'sale_created',$3,$4)",

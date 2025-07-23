@@ -1,7 +1,6 @@
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -72,7 +71,7 @@ export function ProductDetailsDialog({ product, onClose }: ProductDetailsDialogP
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:underline text-sm"
               >
-                {txHash.slice(0, 10)}…{/* recorta para no romper el layout */}
+                {txHash.slice(0, 10)}…
               </a>
             ) : (
               <p className="text-gray-300 text-sm">No registrado</p>

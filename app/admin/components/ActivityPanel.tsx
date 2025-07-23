@@ -139,7 +139,6 @@ export default function ActivityPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Estadísticas resumidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {summary.map(({ label, value, color }) => (
           <Card key={label} className="bg-slate-800 border-slate-700">
@@ -153,7 +152,6 @@ export default function ActivityPanel() {
         ))}
       </div>
 
-      {/* Actividad reciente */}
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
           <CardTitle className="text-white">Actividad Reciente</CardTitle>
@@ -187,8 +185,6 @@ export default function ActivityPanel() {
                   ))}
                 </TableBody>
               </Table>
-
-              {/* Paginación */}
               <div className="flex justify-between items-center mt-4">
                 <Button
                   size="sm"

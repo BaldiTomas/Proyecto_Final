@@ -1,7 +1,6 @@
 // app/distributor/page.tsx
 "use client";
 
-import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { getShipmentContract } from "@/lib/ShipmentRegistrationContract";
 import { useAuthStore } from "@/stores/auth-store";

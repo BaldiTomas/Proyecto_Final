@@ -27,7 +27,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
 
   const sellOptions = products.filter(
     (p) =>
-      (p.custody_user_id === user.id || p.current_custody_id === user.id) && p.stock > 0
+      (p.custody_user_id === user.id || p.current_custody_id === user.id) && p.stock > 0 && p.shipment_status === "delivered"
   );
   const buyers = users.filter((u) => u.id !== user.id && u.role !== "admin");
 

@@ -21,7 +21,6 @@ module.exports = {
   networks: {
     sepolia: {
       url: RPC_URL,
-      // Asegúrate de incluir el prefijo 0x
       accounts: [`0x${PRIVATE_KEY.replace(/^0x/, "")}`],
     },
   },

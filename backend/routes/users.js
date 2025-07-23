@@ -99,7 +99,6 @@ router.put("/users/:id", authenticateToken, authorizeRole(["admin"]), async (req
   }
 
   try {
-    // Verificar si el usuario existe
     const existing = await pool.query("SELECT id FROM users WHERE id = $1 AND is_active = TRUE", [userId])
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" })

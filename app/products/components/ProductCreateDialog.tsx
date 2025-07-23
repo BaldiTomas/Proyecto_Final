@@ -1,22 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
-} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem,} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { categories } from "./categories";
-import {
-  registerProductOnChain, generateMetadataHash,
-} from "@/lib/contracts";
+import { registerProductOnChain, generateMetadataHash,} from "@/lib/contracts";
 import { useAuthStore } from "@/stores/auth-store";
 
 interface NewProduct {
@@ -26,7 +20,7 @@ interface NewProduct {
   origin: string;
   production_date: string;
   stock: number;
-  price: number; // Nuevo campo
+  price: number;
 }
 
 interface Props {
@@ -46,7 +40,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
     origin: "",
     production_date: new Date().toISOString().slice(0, 10),
     stock: 0,
-    price: 0, // Nuevo campo
+    price: 0,
   });
 
   if (!(userRole === "producer" || userRole === "admin")) return null;
@@ -60,24 +54,18 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
     { key: "name", type: "input", label: "Nombre" },
     { key: "description", type: "textarea", label: "Descripción" },
     { key: "origin", type: "input", label: "Origen" },
-    {
-      key: "production_date",
+    { key: "production_date",
       type: "input",
       label: "Fecha de producción",
-      inputProps: { type: "date" },
-    },
-    {
-      key: "stock",
+      inputProps: { type: "date" }, },
+    { key: "stock",
       type: "input",
       label: "Stock",
-      inputProps: { type: "number", min: 0 },
-    },
-    {
-      key: "price",
+      inputProps: { type: "number", min: 0 }, },
+    { key: "price",
       type: "input",
       label: "Precio Unitario (USD)",
-      inputProps: { type: "number", min: 0, step: "0.01" },
-    },
+      inputProps: { type: "number", min: 0, step: "0.01" }, },
   ];
 
   const handleCreate = async () => {

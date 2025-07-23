@@ -13,7 +13,6 @@ export default function HomePage() {
   const router = useRouter()
   const { user } = useAuthStore()
 
-  // Si ya está logueado, lo mandamos al dashboard
   useEffect(() => {
     if (user) {
       router.replace("/dashboard")
@@ -45,7 +44,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Hero Section */}
       <div className="container mx-auto px-4 py-24 text-center">
         <div className="flex items-center justify-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -62,16 +60,12 @@ export default function HomePage() {
           Sistema avanzado de trazabilidad de productos impulsado por tecnología blockchain para garantizar
           transparencia y confianza en la cadena de suministro.
         </p>
-
-        {/* Ahora usamos Link para garantizar la navegación */}
         <Link href="/login" replace>
           <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
             Iniciar Sesión
           </Button>
         </Link>
       </div>
-
-      {/* Features Section */}
       <div className="container mx-auto px-4 py-24">
         <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-4">
           Características Principales
@@ -101,8 +95,6 @@ export default function HomePage() {
           })}
         </div>
       </div>
-
-      {/* CTA Section */}
       <div className="container mx-auto px-4 py-24">
         <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-slate-700">
           <CardContent className="text-center py-16">

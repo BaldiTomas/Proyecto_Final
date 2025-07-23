@@ -90,7 +90,6 @@ router.post("/shipments", async (req, res) => {
     if (!productId || !origin || !destination || !quantity) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
-    // Inserta con status=in_transit
     const { rows } = await pool.query(
       `INSERT INTO shipments
          (product_id, distributor_id, origin, destination, transport_company, quantity, notes, status)
@@ -98,7 +97,6 @@ router.post("/shipments", async (req, res) => {
        RETURNING *`,
       [productId, user.id, origin, destination, transportCompany, quantity, notes]
     );
-    // Confirma la transacción
     if (transactionId) {
       await pool.query(
         `UPDATE sale_transactions
@@ -141,7 +139,6 @@ router.put("/shipments/:id/status", async (req, res) => {
 // GET /api/stats/distributor
 router.get("/stats/distributor", async (req, res) => {
   try {
-    // 1) Conteos
     const [
       inTransitRes,
       deliveredRes,
@@ -156,7 +153,6 @@ router.get("/stats/distributor", async (req, res) => {
         "SELECT COUNT(*) AS products_count, COALESCE(SUM(stock),0) AS total_stock FROM product_custodies WHERE user_id = $1",
         [req.user.id]
       ),
-      // 5) Últimos 5 envíos de este distribuidor
       pool.query(
         `SELECT
            s.id,

@@ -46,7 +46,6 @@ contract ShipmentRegistrationContract is AccessControl {
         _grantRole(DISTRIBUTOR_ROLE, msg.sender);
     }
 
-    // Opcional: función para transferir el rol de admin (mejora seguridad)
     function transferAdmin(
         address newAdmin
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {

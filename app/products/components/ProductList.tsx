@@ -1,20 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle,} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, Package, Eye, Trash2, Filter as FilterIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProductEditDialog } from "./ProductEditDialog";
 import type { ProductWithProducer } from "../../types";
-import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem
-} from "@/components/ui/select";
-import {
-  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle
-} from "@/components/ui/dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem} from "@/components/ui/select";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 
 const CATEGORIES = [
   { value: "all", label: "Todas" },
@@ -95,7 +89,6 @@ export function ProductList({
 
   return (
     <section className="space-y-6">
-      {/* Search + Filtros */}
       <section className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -118,7 +111,6 @@ export function ProductList({
               <DialogTitle className="text-white">Filtrar Productos</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              {/* Estado */}
               <div>
                 <label className="text-gray-300 text-sm mb-1 block">Estado del Envío</label>
                 <Select
@@ -135,7 +127,6 @@ export function ProductList({
                   </SelectContent>
                 </Select>
               </div>
-              {/* Categoría */}
               <div>
                 <label className="text-gray-300 text-sm mb-1 block">Categoría</label>
                 <Select
@@ -152,7 +143,6 @@ export function ProductList({
                   </SelectContent>
                 </Select>
               </div>
-              {/* Stock */}
               <div>
                 <label className="text-gray-300 text-sm mb-1 block">Ordenar por stock</label>
                 <Select
@@ -190,8 +180,6 @@ export function ProductList({
           </DialogContent>
         </Dialog>
       </section>
-
-      {/* Listado */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading
           ? Array(6).fill(0).map((_, idx) => (
