@@ -10,7 +10,20 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useWeb3 } from "@/providers/web3-provider"
 import { Navbar } from "@/components/layout/navbar"
-import { Wallet, Activity, Package, Users, Plus, Clock, CheckCircle, AlertCircle, Truck, ShoppingCart, HandCoins, Boxes } from "lucide-react"
+import {
+  Wallet,
+  Activity,
+  Package,
+  Users,
+  Plus,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Truck,
+  ShoppingCart,
+  HandCoins,
+  Boxes
+} from "lucide-react"
 import { toast } from "sonner"
 
 export default function DashboardPage() {
@@ -46,12 +59,14 @@ export default function DashboardPage() {
     try {
       let currentStats: any = {}
       let currentActivity: any[] = []
-      let apiUrl = ""
+      const api = API_BASE_URL
 
       switch (user.role) {
-        case "admin":
-          apiUrl = `${API_BASE_URL}/stats/admin`
-          const adminResponse = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } })
+        case "admin": {
+          const apiUrl = `${api}/stats/admin`
+          const adminResponse = await fetch(apiUrl, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
           if (!adminResponse.ok) {
             throw new Error(`Error al cargar datos de administrador: ${adminResponse.statusText}`)
           }
@@ -71,31 +86,46 @@ export default function DashboardPage() {
             created_at: item.created_at,
           }))
           break
+        }
 
-        case "producer":
-          const producerProductsRes = await fetch(`${API_BASE_URL}/products?producer_id=${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
-          let producerProductsCount = 0;
-          if (producerProductsRes.ok) {
-            const data = await producerProductsRes.json();
-            producerProductsCount = data.total || 0;
-          }
-          const myCustodyRes = await fetch(`${API_BASE_URL}/product_custodies?user_id=${user.id}`, { headers: { Authorization: `Bearer ${token}` } });
-          let myCustodyCount = 0, myCustodyStock = 0;
-          if (myCustodyRes.ok) {
-            const data = await myCustodyRes.json();
-            myCustodyCount = data.custodies?.length || 0;
-            myCustodyStock = data.custodies?.reduce((sum: number, c: any) => sum + Number(c.stock), 0) || 0;
-          }
+        case "producer": {
+          const [prodRes, custodyRes] = await Promise.all([
+            fetch(`${api}/products?producer_id=${user.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            }),
+            fetch(`${api}/product_custodies?user_id=${user.id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          ])
+          const prodData = prodRes.ok ? await prodRes.json() : { total: 0 }
+          const custodyData = custodyRes.ok ? await custodyRes.json() : { custodies: [] }
+
           currentStats = {
-            myProductsProduced: producerProductsCount,
-            myCustodyProducts: myCustodyCount,
-            myCustodyStock,
+            myProductsProduced: prodData.total || 0,
+            myCustodyProducts: custodyData.custodies.length,
+            myCustodyStock: custodyData.custodies.reduce((sum: number, c: any) => sum + Number(c.stock), 0)
           }
-          currentActivity = []
-          break
 
-        case "seller":
-          const statsRes = await fetch(`${API_BASE_URL}/stats/seller-stats`, {
+          // CORRECCIÓN: llamamos al endpoint con /stats/producers/activity
+          const actRes = await fetch(
+            `${api}/stats/producers/activity?user_id=${user.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          if (actRes.ok) {
+            const { activity } = await actRes.json()
+            currentActivity = activity.map((item: any) => ({
+              id: item.id,
+              action: item.action,
+              entity: item.entity_type,
+              actor_name: item.actor_name,
+              date: item.created_at
+            }))
+          }
+          break
+        }
+
+        case "seller": {
+          const statsRes = await fetch(`${api}/stats/seller-stats`, {
             headers: { Authorization: `Bearer ${token}` }
           })
           if (!statsRes.ok) throw new Error("Error al obtener estadísticas del vendedor")
@@ -121,12 +151,12 @@ export default function DashboardPage() {
             date: h.timestamp,
           }))
           break
+        }
 
         case "distributor": {
-          const res = await fetch(
-            `${API_BASE_URL}/distributor/stats/distributor`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
+          const res = await fetch(`${api}/distributor/stats/distributor`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
           if (!res.ok) throw new Error("Error al obtener estadísticas de distribuidor")
           const data = await res.json()
 
@@ -146,7 +176,7 @@ export default function DashboardPage() {
                 ? "Envío iniciado"
                 : s.status === "delivered"
                 ? "Envío entregado"
-                :s.status === "cancelled"
+                : s.status === "cancelled"
                 ? "Envío cancelado"
                 : `Envío ${s.status}`,
             actor_name: user.name,
@@ -196,9 +226,8 @@ export default function DashboardPage() {
         ]
       case "producer":
         return [
-          { icon: Plus, label: "Registrar Producto", action: () => router.push("/products/new") },
+          { icon: Plus, label: "Registrar Producto", action: () => router.push("/reports") },
           { icon: Boxes, label: "Mis Productos", action: () => router.push("/products?filter=my-produced-products") },
-          { icon: Package, label: "Productos en Custodia", action: () => router.push("/products?filter=my-custody-products") },
         ]
       case "distributor":
         return [
@@ -215,18 +244,25 @@ export default function DashboardPage() {
           { icon: Package, label: "Explorar Productos", action: () => router.push("/products") },
           { icon: Activity, label: "Rastrear Producto", action: () => router.push("/products") },
         ]
-      default: return []
+      default:
+        return []
     }
   }
 
-    const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role: string) => {
     switch (role) {
-      case "admin": return "Administrador"
-      case "producer": return "Productor"
-      case "seller": return "Vendedor"
-      case "distributor": return "Distribuidor"
-      case "user": return "Usuario"
-      default: return role
+      case "admin":
+        return "Administrador"
+      case "producer":
+        return "Productor"
+      case "seller":
+        return "Vendedor"
+      case "distributor":
+        return "Distribuidor"
+      case "user":
+        return "Usuario"
+      default:
+        return role
     }
   }
 
@@ -243,10 +279,13 @@ export default function DashboardPage() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
+          {/* Título y conexión de wallet */}
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white">Bienvenido, {user.name}</h1>
-              <p className="text-gray-400 mt-1">Panel de control - {getRoleLabel(user.role)}</p>
+              <p className="text-gray-400 mt-1">
+                Panel de control - {getRoleLabel(user.role)}
+              </p>
             </div>
             {!isConnected && (
               <Card className="p-4 bg-slate-800 border-slate-700">
@@ -264,6 +303,7 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Tarjetas de stats o loader */}
           {isConnected && (
             <Card className="bg-slate-800 border-slate-700">
               <CardContent className="p-4">
@@ -311,6 +351,7 @@ export default function DashboardPage() {
             <StatsCards userRole={user.role} stats={stats} loading={loading} />
           )}
 
+          {/* Actividad reciente y acciones rápidas */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <Card className="bg-slate-800 border-slate-700">
@@ -339,10 +380,11 @@ export default function DashboardPage() {
                           key={activity.id}
                           className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-700/50 transition-colors"
                         >
-                          {getStatusIcon('default')}
+                          {getStatusIcon(activity.status || "default")}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white">
-                              {activity.action} {activity.product_name ? `- ${activity.product_name}` : ""}
+                              {activity.action}
+                              {activity.product_name ? ` - ${activity.product_name}` : ""}
                             </p>
                             <p className="text-xs text-gray-400">
                               {activity.actor_name || ""} {activity.notes ? `| ${activity.notes}` : ""}

@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem,} from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { categories } from "./categories";
-import { registerProductOnChain, generateMetadataHash,} from "@/lib/contracts";
+import { registerProductOnChain, generateMetadataHash } from "@/lib/contracts";
 import { useAuthStore } from "@/stores/auth-store";
+import { useWeb3Store } from "@/stores/web3-store";
 
 interface NewProduct {
   name: string;
@@ -33,6 +34,7 @@ interface Props {
 export function ProductCreateDialog({ userRole, onCreate }: Props) {
   const { user } = useAuthStore();
   const [open, setOpen] = useState(false);
+  const { isConnected } = useWeb3Store();
   const [newProduct, setNewProduct] = useState<NewProduct>({
     name: "",
     description: "",
@@ -54,23 +56,33 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
     { key: "name", type: "input", label: "Nombre" },
     { key: "description", type: "textarea", label: "Descripción" },
     { key: "origin", type: "input", label: "Origen" },
-    { key: "production_date",
+    {
+      key: "production_date",
       type: "input",
       label: "Fecha de producción",
-      inputProps: { type: "date" }, },
-    { key: "stock",
+      inputProps: { type: "date" },
+    },
+    {
+      key: "stock",
       type: "input",
       label: "Stock",
-      inputProps: { type: "number", min: 0 }, },
-    { key: "price",
+      inputProps: { type: "number", min: 0 },
+    },
+    {
+      key: "price",
       type: "input",
       label: "Precio Unitario (USD)",
-      inputProps: { type: "number", min: 0, step: "0.01" }, },
+      inputProps: { type: "number", min: 0, step: "0.01" },
+    },
   ];
 
   const handleCreate = async () => {
     if (!user) {
       toast.error("Debes iniciar sesión");
+      return;
+    }
+    if (!isConnected) {
+      toast.error("Debes conectar tu billetera para crear un producto");
       return;
     }
     if (!newProduct.name.trim()) {
@@ -125,12 +137,16 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
           Agregar Producto
         </Button>
       </DialogTrigger>
-
       <DialogContent className="bg-slate-800 border-slate-700 max-h-[80vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-white">
             Crear Nuevo Producto
           </DialogTitle>
+          {!isConnected && (
+            <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
+              Debes conectar tu billetera antes de crear un producto.
+            </div>
+          )}
         </DialogHeader>
 
         {fields.map(({ key, type, label, inputProps }) => (
@@ -141,7 +157,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
             {type === "textarea" ? (
               <Textarea
                 id={key}
-                value={String(newProduct[key])}
+                value={String(newProduct[key as keyof NewProduct])}
                 onChange={(e) =>
                   setNewProduct((p) => ({
                     ...p,
@@ -155,7 +171,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
               <Input
                 id={key}
                 {...(inputProps ?? {})}
-                value={newProduct[key] as any}
+                value={newProduct[key as keyof NewProduct] as any}
                 onChange={(e) =>
                   setNewProduct((p) => ({
                     ...p,
@@ -202,6 +218,7 @@ export function ProductCreateDialog({ userRole, onCreate }: Props) {
           <Button
             onClick={handleCreate}
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={!isConnected}
           >
             Crear Producto
           </Button>

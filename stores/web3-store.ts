@@ -7,17 +7,20 @@ interface Web3State {
   account: string | null
   chainId: number | null
   isConnected: boolean
+  walletAddress: string | null
   setProvider: (provider: ethers.BrowserProvider) => void
   setSigner: (signer: ethers.JsonRpcSigner) => void
   setAccount: (account: string) => void
   setChainId: (chainId: number) => void
   setConnected: (connected: boolean) => void
   disconnect: () => void
+  isWalletConnected: () => boolean
 }
 
-export const useWeb3Store = create<Web3State>((set) => ({
+export const useWeb3Store = create<Web3State>((set, get) => ({
   provider: null,
   signer: null,
+  walletAddress: null,
   account: null,
   chainId: null,
   isConnected: false,
@@ -34,4 +37,8 @@ export const useWeb3Store = create<Web3State>((set) => ({
       chainId: null,
       isConnected: false,
     }),
+    isWalletConnected: () => {
+    const { walletAddress, isConnected } = get();
+    return !!walletAddress && isConnected;
+  },
 }))

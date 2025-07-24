@@ -136,4 +136,32 @@ router.get('/seller-stats', authenticateToken, async (req, res) => {
   }
 });
 
+router.get("/producers/activity", authenticateToken, authorizeRole(["producer"]), async (req, res) => {
+  const userId = req.query.user_id || req.user.id;
+  try {
+    const logs = await pool.query(
+      `
+      SELECT
+        sl.id,
+        sl.action,
+        sl.entity_type,
+        sl.entity_id,
+        sl.details,
+        sl.created_at,
+        u.name as actor_name
+      FROM system_logs sl
+      LEFT JOIN users u ON sl.user_id = u.id
+      WHERE sl.user_id = $1
+      ORDER BY sl.created_at DESC
+      LIMIT 10
+      `,
+      [userId]
+    );
+    res.json({ activity: logs.rows });
+  } catch (e) {
+    console.error("Error obteniendo logs del productor:", e);
+    res.status(500).json({ error: "Error al obtener actividad reciente del productor" });
+  }
+});
+
 module.exports = router;

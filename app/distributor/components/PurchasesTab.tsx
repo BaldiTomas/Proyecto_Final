@@ -1,11 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {Dialog, DialogContent, DialogFooter,DialogHeader, DialogTitle, DialogDescription, DialogTrigger} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Transaction, NewShipmentData } from "../../types";
+import { useWeb3Store } from "@/stores/web3-store";
 
 interface PurchasesTabProps {
   purchases: Transaction[];
@@ -18,6 +19,7 @@ export default function PurchasesTab({
 }: PurchasesTabProps) {
   const [activeTx, setActiveTx] = useState<Transaction | null>(null);
   const [note, setNote] = useState<string>("");
+  const { isConnected } = useWeb3Store();
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md border border-slate-700">
@@ -71,6 +73,11 @@ export default function PurchasesTab({
                           ¿Crear envío para la compra #{tx.id}?
                         </DialogDescription>
                       </DialogHeader>
+                      {!isConnected && (
+                        <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
+                          Debes conectar tu billetera antes de crear un envío.
+                        </div>
+                      )}
                       <div className="py-4 space-y-2 text-sm">
                         <p><strong>Producto:</strong> {tx.product_name}</p>
                         <p><strong>Cantidad:</strong> {tx.quantity}</p>
@@ -100,7 +107,7 @@ export default function PurchasesTab({
                         </Button>
                         <Button
                           onClick={() => {
-                            if (!activeTx) return;
+                            if (!activeTx || !isConnected) return;
                             onConfirmShipment({
                               productId: activeTx.product_id,
                               origin: "Venta",
@@ -113,6 +120,8 @@ export default function PurchasesTab({
                             setActiveTx(null);
                             setNote("");
                           }}
+                          disabled={!isConnected}
+                          className="bg-green-600 hover:bg-green-700"
                         >
                           Confirmar
                         </Button>

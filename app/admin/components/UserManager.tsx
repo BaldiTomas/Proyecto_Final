@@ -1,4 +1,3 @@
-// app/admin/UserManager.tsx
 "use client";
 
 import { registerUserOnChain, adminUpdateUserOnChain } from "@/lib/contracts";
@@ -7,13 +6,13 @@ import { userAPI } from "@/lib/api";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
-import {Card,CardHeader,CardTitle,CardDescription,CardContent,
-} from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useWeb3Store } from "@/stores/web3-store";
 
 const roles = [
   { value: "admin", label: "Administrador" },
@@ -37,6 +36,7 @@ export default function UserManager() {
   const [isOpen, setIsOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editUserId, setEditUserId] = useState<number | null>(null);
+  const { isConnected } = useWeb3Store();
   const [newUser, setNewUser] = useState<NewUser>({
     name: "",
     email: "",
@@ -79,6 +79,10 @@ export default function UserManager() {
 
     try {
       if (wallet_address) {
+        if (!isConnected) {
+          toast.error("Debes conectar tu billetera antes de continuar.");
+          return;
+        }
         if (editMode) {
           await adminUpdateUserOnChain(wallet_address, name, email);
           toast.success("Usuario actualizado en Blockchain");
@@ -94,7 +98,6 @@ export default function UserManager() {
         await userAPI.registerUser(newUser);
         toast.success("Usuario creado en backend");
       }
-
 
       setIsOpen(false);
       resetForm();
@@ -132,9 +135,7 @@ export default function UserManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">
-          Gestión de Usuarios
-        </h2>
+        <h2 className="text-xl font-semibold text-white">Gestión de Usuarios</h2>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button
@@ -153,6 +154,11 @@ export default function UserManager() {
               <DialogTitle className="text-white">
                 {editMode ? "Editar Usuario" : "Crear Usuario"}
               </DialogTitle>
+              {!isConnected && (
+                <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
+                  Debes conectar tu billetera antes de crear o editar un usuario.
+                </div>
+              )}
             </DialogHeader>
             {(["name", "email", "password"] as const).map((f) => (
               <div key={f} className="mb-4">
@@ -212,6 +218,7 @@ export default function UserManager() {
               <Button
                 onClick={handleCreateOrUpdate}
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={!isConnected}
               >
                 {editMode ? "Actualizar" : "Crear"}
               </Button>
@@ -236,7 +243,8 @@ export default function UserManager() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg text-white">{u.name}</CardTitle>
-                  <CardDescription className="text-gray-400">                {u.email}
+                  <CardDescription className="text-gray-400">
+                    {u.email}
                   </CardDescription>
                 </div>
                 <Badge

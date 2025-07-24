@@ -22,6 +22,8 @@ module.exports = {
     sepolia: {
       url: RPC_URL,
       accounts: [`0x${PRIVATE_KEY.replace(/^0x/, "")}`],
+      maxFeePerGas: 30_000_000_000,      
+      maxPriorityFeePerGas: 10_000_000_000,
     },
   },
 };

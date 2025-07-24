@@ -44,12 +44,22 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
 
   const producers = users.filter((u) => u.role === "producer");
   const selectedProduct = producerProducts.find((p) => p.id === buyProductId);
+  const maxStock = selectedProduct ? selectedProduct.stock : undefined;
 
   async function handleBuy(e: React.FormEvent) {
     e.preventDefault();
+    const qty = Number(buyQty);
+
     if (!producerId || !buyProductId || !buyQty)
       return toast.error("Completa todos los campos de compra");
     if (producerId === user.id) return toast.error("No puedes comprar a ti mismo");
+
+    if (isNaN(qty) || qty < 1) {
+      return toast.error("La cantidad debe ser mayor a cero.");
+    }
+    if (selectedProduct && qty > selectedProduct.stock) {
+      return toast.error(`No puedes comprar más de ${selectedProduct.stock} unidades de este producto.`);
+    }
 
     const price = selectedProduct?.price ?? 0;
 
@@ -57,7 +67,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
       await buyProductOnChain({
         productId: buyProductId,
         toCustodyId: user.id,
-        quantity: +buyQty,
+        quantity: qty,
         price: +price,
       });
       toast.success("Compra registrada en blockchain");
@@ -77,7 +87,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
           product_id: buyProductId,
           seller_id: producerId,
           buyer_email: user.email,
-          quantity: +buyQty,
+          quantity: qty,
           price_per_unit: +price,
           location: "",
           notes: buyNotes,
@@ -153,10 +163,27 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
             <Input
               type="number"
               min={1}
+              max={maxStock}
               value={buyQty}
-              onChange={(e) => setBuyQty(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d*$/.test(val)) {
+                  setBuyQty(val);
+                }
+              }}
               className="bg-slate-700 border-slate-600 text-white"
+              placeholder={
+                maxStock !== undefined
+                  ? `Máx: ${maxStock}`
+                  : "Ingrese cantidad"
+              }
+              disabled={!selectedProduct}
             />
+            {selectedProduct && (
+              <div className="text-xs text-gray-400 mt-1">
+                Stock disponible: {selectedProduct.stock}
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-gray-200">Precio Unitario (USD)</Label>

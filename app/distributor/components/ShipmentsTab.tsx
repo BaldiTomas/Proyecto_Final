@@ -1,11 +1,13 @@
 "use client";
 
 import { FC, useState } from "react";
-import {Card,CardHeader,CardTitle,CardDescription,CardContent,} from "@/components/ui/card";
+import {
+  Card, CardHeader, CardTitle, CardDescription, CardContent,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {Clock,CheckCircle,AlertCircle,Package as PackageIcon,} from "lucide-react";
-import type {Product,Shipment,ShipmentStatus,NewShipmentData,} from "../../types";
+import { Clock, CheckCircle, AlertCircle, Package as PackageIcon } from "lucide-react";
+import type { Product, Shipment, ShipmentStatus, NewShipmentData } from "../../types";
 
 const STATUS_LABELS: Record<ShipmentStatus, string> = {
   pending: "Pendiente",
@@ -68,6 +70,12 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-white">Gestión de Envíos</h2>
       </div>
+      {!isConnected && (
+        <div className="mb-4 text-yellow-400 text-sm">
+          Debes conectar tu billetera para operar con los envíos.
+        </div>
+      )}
+
       <div className="grid gap-4">
         {paged.map((s) => (
           <Card key={s.id} className="bg-slate-800 border-slate-700">
@@ -82,7 +90,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                   </CardDescription>
                 </div>
                 <Badge className={getStatusColor(s.status)}>
-                  {getStatusIcon(s.status)}{' '}
+                  {getStatusIcon(s.status)}{" "}
                   <span className="ml-1">{STATUS_LABELS[s.status]}</span>
                 </Badge>
               </div>
@@ -111,6 +119,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                       size="sm"
                       onClick={() => onUpdateStatus(s.id, "delivered")}
                       className="bg-green-600 hover:bg-green-700"
+                      disabled={!isConnected}
                     >
                       Confirmar
                     </Button>
@@ -119,6 +128,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                       variant="outline"
                       onClick={() => onUpdateStatus(s.id, "cancelled")}
                       className="border-red-600 text-red-400 hover:bg-red-900/20"
+                      disabled={!isConnected}
                     >
                       Cancelar
                     </Button>

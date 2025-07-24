@@ -115,8 +115,8 @@
       ]
     },
     "C:\\Users\\Tomas\\Desktop\\prueba 2\\backend\\contracts\\ShipmentRegistrationContract.sol": {
-      "lastModificationDate": 1753063801419,
-      "contentHash": "2be4cf11dd60492f9601b3712b71766b",
+      "lastModificationDate": 1753228773025,
+      "contentHash": "31fd484ee975a3befab0d05acdb37a94",
       "sourceName": "contracts/ShipmentRegistrationContract.sol",
       "solcConfig": {
         "version": "0.8.20",

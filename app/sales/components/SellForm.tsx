@@ -29,15 +29,25 @@ export default function SellForm({ apiBase, user, token, users, products, reload
     (p) =>
       (p.custody_user_id === user.id || p.current_custody_id === user.id) && p.stock > 0 && p.shipment_status === "delivered"
   );
-  const buyers = users.filter((u) => u.id !== user.id && u.role !== "admin");
+  const buyers = users.filter((u) => u.id !== user.id && u.role === "seller");
 
   const selectedProduct = sellOptions.find((p) => p.id === sellProductId);
+  const maxStock = selectedProduct ? selectedProduct.stock : undefined;
 
   async function handleSell(e: React.FormEvent) {
     e.preventDefault();
+    const qty = Number(sellQty);
+
     if (!sellProductId || !buyerId || !sellQty)
       return toast.error("Completa todos los campos de venta");
     if (buyerId === user.id) return toast.error("No puedes vender a ti mismo");
+
+    if (isNaN(qty) || qty < 1) {
+      return toast.error("La cantidad debe ser mayor a cero.");
+    }
+    if (selectedProduct && qty > selectedProduct.stock) {
+      return toast.error(`Solo tienes ${selectedProduct.stock} unidades disponibles para vender.`);
+    }
 
     const prod = sellOptions.find(
       (p) =>
@@ -45,7 +55,6 @@ export default function SellForm({ apiBase, user, token, users, products, reload
         (p.custody_user_id === user.id || p.current_custody_id === user.id)
     );
     if (!prod) return toast.error("Producto no disponible");
-    if (+sellQty > prod.stock) return toast.error(`Solo tienes ${prod.stock} unidades`);
 
     const price = selectedProduct?.price ?? 0;
 
@@ -53,7 +62,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
       await registerSaleOnChain({
         productId: sellProductId,
         toCustodyId: buyerId,
-        quantity: +sellQty,
+        quantity: qty,
         price: +price,
       });
       toast.success("Venta registrada en blockchain");
@@ -72,7 +81,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
         body: JSON.stringify({
           product_id: sellProductId,
           buyer_email: users.find((u) => u.id === buyerId)?.email,
-          quantity: +sellQty,
+          quantity: qty,
           price_per_unit: +price,
           location: "",
           notes: sellNotes,
@@ -137,10 +146,27 @@ export default function SellForm({ apiBase, user, token, users, products, reload
             <Input
               type="number"
               min={1}
+              max={maxStock}
               value={sellQty}
-              onChange={(e) => setSellQty(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d*$/.test(val)) {
+                  setSellQty(val);
+                }
+              }}
               className="bg-slate-700 border-slate-600 text-white"
+              placeholder={
+                maxStock !== undefined
+                  ? `Máx: ${maxStock}`
+                  : "Ingrese cantidad"
+              }
+              disabled={!selectedProduct}
             />
+            {selectedProduct && (
+              <div className="text-xs text-gray-400 mt-1">
+                Stock disponible: {selectedProduct.stock}
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-gray-200">Precio Unitario (USD)</Label>
