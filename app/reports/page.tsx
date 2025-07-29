@@ -4,37 +4,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { Navbar } from "@/components/layout/navbar";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import {Card,CardHeader,CardTitle,CardDescription,CardContent,} from "@/components/ui/card";
+import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem,} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  Download,
-  Loader2,
-  Package,
-  BarChart3,
-} from "lucide-react";
+import {FileText,Download,Loader2,Package,BarChart3,} from "lucide-react";
 import { toast } from "sonner";
-import {
-  generateProductReport,
-  downloadReport,
-  getReportFilename,
-  type ReportOptions,
-} from "@/lib/report-utils";
+import {generateProductReport,downloadReport,getReportFilename,type ReportOptions,} from "@/lib/report-utils";
 
 interface Product {
   id: number;
@@ -80,7 +57,6 @@ export default function ReportsPage() {
 
   const API = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
-  // Carga inicial: productos + transacciones
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -106,7 +82,6 @@ export default function ReportsPage() {
     })();
   }, [token, API]);
 
-  // Cuando cambia producto u opción de historial, recarga product_history
   useEffect(() => {
     if (
       !token ||
@@ -119,7 +94,6 @@ export default function ReportsPage() {
     (async () => {
       try {
         const res = await fetch(
-          // endpoint corregido
           `${API}/products/${selectedProductId}/history`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -169,7 +143,6 @@ const generateReport = async () => {
   try {
     toast.info("Generando reporte…");
 
-    // Normalizamos ownershipHistory incluyendo cualquier campo de hash posible
     const formattedHistory = reportOptions.includeOwnershipHistory
       ? ownershipHistory.map((entry: any) => ({
           ...entry,
@@ -182,7 +155,6 @@ const generateReport = async () => {
             "",
         }))
       : [];
-
     const reportData = {
       product: selectedProduct,
       transactions: productTransactions,
@@ -190,7 +162,6 @@ const generateReport = async () => {
       reportGeneratedBy: `${user?.name} - TrackChain`,
       reportGeneratedAt: Math.floor(Date.now() / 1000),
     };
-
     const pdfBlob = generateProductReport(reportData, reportOptions);
     const filename = getReportFilename(selectedProduct);
     downloadReport(pdfBlob, filename);
@@ -204,12 +175,10 @@ const generateReport = async () => {
 };
 
   if (!user) return null;
-
   return (
     <div className="min-h-screen bg-slate-900">
       <Navbar />
       <main className="container mx-auto px-4 py-8 space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-white">Generador de Reportes</h1>
@@ -221,7 +190,6 @@ const generateReport = async () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Panel de opciones */}
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
@@ -232,7 +200,6 @@ const generateReport = async () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Selector de producto */}
               <div className="space-y-2">
                 <Label htmlFor="product-select" className="text-white">
                   Producto
@@ -258,7 +225,6 @@ const generateReport = async () => {
                 </Select>
               </div>
 
-              {/* Checkboxes */}
               <div className="space-y-3">
                 <Label className="text-white">Incluir en reporte:</Label>
                 {(
@@ -283,7 +249,6 @@ const generateReport = async () => {
                 ))}
               </div>
 
-              {/* Botón Generar */}
               <Button
                 onClick={generateReport}
                 disabled={!selectedProduct || isGenerating}
@@ -304,7 +269,6 @@ const generateReport = async () => {
             </CardContent>
           </Card>
 
-          {/* Vista Previa */}
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader>
               <CardTitle className="text-white">Vista Previa</CardTitle>
@@ -320,7 +284,6 @@ const generateReport = async () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Datos básicos */}
                   <div className="p-4 bg-slate-700/50 rounded-lg">
                     <h3 className="text-white font-semibold mb-2">
                       {selectedProduct.name}
@@ -345,7 +308,6 @@ const generateReport = async () => {
                     {selectedProduct.origin}
                   </p>
 
-                  {/* Transacciones */}
                   {reportOptions.includeTransactions &&
                     productTransactions.length > 0 && (
                       <div>
@@ -365,7 +327,6 @@ const generateReport = async () => {
                       </div>
                     )}
 
-                  {/* Historial de trazabilidad */}
                   {reportOptions.includeOwnershipHistory &&
                     ownershipHistory.length > 0 && (
                       <div>
