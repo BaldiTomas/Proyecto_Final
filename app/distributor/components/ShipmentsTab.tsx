@@ -69,13 +69,12 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-white">Gestión de Envíos</h2>
+        {!isConnected && (
+          <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
+            Debes conectar tu billetera para gestionar los envios.
+          </div>
+        )}
       </div>
-      {!isConnected && (
-        <div className="mb-4 text-yellow-400 text-sm">
-          Debes conectar tu billetera para operar con los envíos.
-        </div>
-      )}
-
       <div className="grid gap-4">
         {paged.map((s) => (
           <Card key={s.id} className="bg-slate-800 border-slate-700">

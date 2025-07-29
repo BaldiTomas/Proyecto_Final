@@ -12,11 +12,11 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from 
 
 const CATEGORIES = [
   { value: "all", label: "Todas" },
-  { value: "Alimentos", label: "Alimentos" },
-  { value: "Farmaceutica", label: "Farmaceutica" },
-  { value: "Electronica", label: "Electronica" },
-  { value: "Arte", label: "Arte" },
-  { value: "Otros", label: "Otros" },
+  { value: "alimentos", label: "Alimentos" },
+  { value: "farmaceutica", label: "Farmaceutica" },
+  { value: "electronica", label: "Electronica" },
+  { value: "arte", label: "Arte" },
+  { value: "otros", label: "Otros" },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
