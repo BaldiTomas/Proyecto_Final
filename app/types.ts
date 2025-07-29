@@ -48,6 +48,7 @@ export interface Shipment {
   id: number;
   product_id: number;
   product_name: string;
+  producer_name: string; 
   origin: string;
   destination: string;
   transport_company: string;

@@ -58,18 +58,31 @@ router.get("/products", async (req, res) => {
 router.get("/shipments", async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT
-         s.id, s.product_id, p.name AS product_name,
-         s.origin, s.destination, s.transport_company,
-         s.quantity, s.status, s.notes,
-         s.blockchain_hash, s.created_at
-       FROM shipments s
-       JOIN products p ON s.product_id = p.id
-       ORDER BY s.created_at DESC`
+      `
+      SELECT
+        s.id,
+        s.product_id,
+        p.name AS product_name,
+        u.name AS producer_name,
+        s.origin,
+        s.destination,
+        s.transport_company,
+        s.quantity,
+        s.status,
+        s.notes,
+        s.blockchain_hash,
+        s.created_at
+      FROM shipments s
+      JOIN products p
+        ON s.product_id = p.id
+      JOIN users u
+        ON p.producer_id = u.id
+      ORDER BY s.created_at DESC
+      `
     );
     res.json({ shipments: rows });
   } catch (err) {
-    console.error(err);
+    console.error("Error al obtener envíos:", err);
     res.status(500).json({ error: "Error al obtener envíos" });
   }
 });

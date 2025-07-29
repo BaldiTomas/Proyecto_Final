@@ -2,12 +2,26 @@
 
 import { FC, useState } from "react";
 import {
-  Card, CardHeader, CardTitle, CardDescription, CardContent,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, AlertCircle, Package as PackageIcon } from "lucide-react";
-import type { Product, Shipment, ShipmentStatus, NewShipmentData } from "../../types";
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Package as PackageIcon,
+} from "lucide-react";
+import type {
+  Product,
+  Shipment,
+  ShipmentStatus,
+  NewShipmentData,
+} from "../../types";
 
 const STATUS_LABELS: Record<ShipmentStatus, string> = {
   pending: "Pendiente",
@@ -60,21 +74,21 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
   const [page, setPage] = useState(0);
   const pageSize = 5;
   const pageCount = Math.ceil(shipments.length / pageSize);
-  const paged = shipments.slice(
-    page * pageSize,
-    page * pageSize + pageSize
-  );
+  const paged = shipments.slice(page * pageSize, page * pageSize + pageSize);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-white">Gestión de Envíos</h2>
+        <h2 className="text-xl font-semibold text-white">
+          Gestión de Envíos
+        </h2>
         {!isConnected && (
           <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
-            Debes conectar tu billetera para gestionar los envios.
+            Debes conectar tu billetera para gestionar los envíos.
           </div>
         )}
       </div>
+
       <div className="grid gap-4">
         {paged.map((s) => (
           <Card key={s.id} className="bg-slate-800 border-slate-700">
@@ -85,7 +99,12 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                     {s.product_name}
                   </CardTitle>
                   <CardDescription className="text-gray-400">
-                    {s.origin} → {s.destination}
+                    <span className="block">
+                      <strong>Productor:</strong> {s.producer_name}
+                    </span>
+                    <span>
+                      {s.origin} → {s.destination}
+                    </span>
                   </CardDescription>
                 </div>
                 <Badge className={getStatusColor(s.status)}>
@@ -94,6 +113,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                 </Badge>
               </div>
             </CardHeader>
+
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
@@ -134,6 +154,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                   </div>
                 )}
               </div>
+
               {s.notes && (
                 <div className="mt-4 bg-slate-700/50 p-3 rounded-lg">
                   <p className="text-sm text-gray-300">{s.notes}</p>
@@ -143,6 +164,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
           </Card>
         ))}
       </div>
+
       {pageCount > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
           <Button

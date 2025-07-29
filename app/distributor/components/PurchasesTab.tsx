@@ -1,8 +1,23 @@
 "use client";
 import React, { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {Dialog, DialogContent, DialogFooter,DialogHeader, DialogTitle, DialogDescription, DialogTrigger} from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Transaction, NewShipmentData } from "../../types";
@@ -23,24 +38,30 @@ export default function PurchasesTab({
 
   return (
     <div className="bg-slate-800 p-6 rounded-lg shadow-md border border-slate-700">
-      <h2 className="text-xl font-semibold text-white mb-4">Envios Disponibles</h2>
+      <h2 className="text-xl font-semibold text-white mb-4">
+        Envios Disponibles
+      </h2>
+
       <Table className="bg-slate-900 border border-slate-700 rounded-md">
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Producto</TableHead>
+            <TableHead>Productor</TableHead>
             <TableHead>Cant.</TableHead>
             <TableHead>Comprador</TableHead>
             <TableHead>Precio</TableHead>
             <TableHead>Acción</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {purchases.length > 0 ? (
             purchases.map((tx) => (
               <TableRow key={tx.id} className="text-white">
                 <TableCell>{tx.id}</TableCell>
                 <TableCell>{tx.product_name}</TableCell>
+                <TableCell>{tx.seller_name}</TableCell>
                 <TableCell>{tx.quantity}</TableCell>
                 <TableCell>{tx.buyer_name}</TableCell>
                 <TableCell>{tx.total_amount}</TableCell>
@@ -66,6 +87,7 @@ export default function PurchasesTab({
                         Crear Envío
                       </Button>
                     </DialogTrigger>
+
                     <DialogContent className="bg-slate-800 border-slate-700 max-h-[80vh] overflow-auto">
                       <DialogHeader>
                         <DialogTitle>Confirmar Envío</DialogTitle>
@@ -73,18 +95,33 @@ export default function PurchasesTab({
                           ¿Crear envío para la compra #{tx.id}?
                         </DialogDescription>
                       </DialogHeader>
+
                       {!isConnected && (
                         <div className="mb-3 text-yellow-400 text-sm border border-yellow-600 bg-yellow-900/30 rounded p-2">
                           Debes conectar tu billetera antes de crear un envío.
                         </div>
                       )}
-                      <div className="py-4 space-y-2 text-sm">
-                        <p><strong>Producto:</strong> {tx.product_name}</p>
-                        <p><strong>Cantidad:</strong> {tx.quantity}</p>
-                        <p><strong>Comprador:</strong> {tx.buyer_name}</p>
+
+                      <div className="py-4 space-y-2 text-sm text-gray-300">
+                        <p>
+                          <strong>Producto:</strong> {tx.product_name}
+                        </p>
+                        <p>
+                          <strong>Productor:</strong> {tx.seller_name}
+                        </p>
+                        <p>
+                          <strong>Cantidad:</strong> {tx.quantity}
+                        </p>
+                        <p>
+                          <strong>Comprador:</strong> {tx.buyer_name}
+                        </p>
                       </div>
+
                       <div className="py-2">
-                        <Label htmlFor="shipment-note" className="text-sm text-gray-300">
+                        <Label
+                          htmlFor="shipment-note"
+                          className="text-sm text-gray-300"
+                        >
                           Nota (opcional)
                         </Label>
                         <Textarea
@@ -95,6 +132,7 @@ export default function PurchasesTab({
                           placeholder="Comentario..."
                         />
                       </div>
+
                       <DialogFooter className="flex justify-end gap-2">
                         <Button
                           variant="outline"
@@ -133,7 +171,7 @@ export default function PurchasesTab({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-gray-400">
+              <TableCell colSpan={7} className="text-center text-gray-400">
                 No hay envios disponibles.
               </TableCell>
             </TableRow>
