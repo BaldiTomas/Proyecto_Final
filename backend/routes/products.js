@@ -1,10 +1,9 @@
-// backend/routes/products.js
-
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const { authenticateToken, authorizeRole } = require("../middlewares/auth");
 
+// POST /products - create new product and initial custody
 router.post(
   "/",
   authenticateToken,
@@ -42,6 +41,8 @@ router.post(
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      // 1) Insert product
       const prodRes = await client.query(
         `INSERT INTO products
            (name, description, category, producer_id, origin, production_date,
@@ -61,10 +62,27 @@ router.post(
         ]
       );
       const product = prodRes.rows[0];
+
+      // 2) Initial custody record
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
          VALUES ($1, $2, $3)`,
         [product.id, producer_id, stock]
+      );
+
+      // 3) History entry
+      await client.query(
+        `INSERT INTO product_history
+           (product_id, actor_id, action, location, notes, blockchain_hash)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          product.id,
+          producer_id,
+          'Creación de producto',
+          null,            
+          null,            
+          blockchain_hash,
+        ]
       );
 
       await client.query("COMMIT");
@@ -81,6 +99,7 @@ router.post(
   }
 );
 
+// GET /products - list products with custody and last shipment status
 router.get(
   "/",
   authenticateToken,
@@ -151,6 +170,7 @@ router.get(
   }
 );
 
+// POST /products/sales - register sale and update custody + history
 router.post(
   "/sales",
   authenticateToken,
@@ -164,9 +184,14 @@ router.post(
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const buyerRes = await client.query("SELECT id FROM users WHERE email = $1 AND is_active = TRUE", [buyer_email]);
+      // find buyer
+      const buyerRes = await client.query(
+        "SELECT id FROM users WHERE email = $1 AND is_active = TRUE",
+        [buyer_email]
+      );
       if (!buyerRes.rows.length) throw new Error("Comprador no encontrado");
       const buyer_id = buyerRes.rows[0].id;
+      // lock seller's custody
       const pcRes = await client.query(
         "SELECT stock FROM product_custodies WHERE product_id = $1 AND user_id = $2 FOR UPDATE",
         [product_id, user.id]
@@ -174,11 +199,12 @@ router.post(
       if (!pcRes.rows.length || Number(pcRes.rows[0].stock) < Number(quantity)) {
         throw new Error("Stock insuficiente o no posees este producto");
       }
-
+      // decrement seller's stock
       await client.query(
         "UPDATE product_custodies SET stock = stock - $1 WHERE product_id = $2 AND user_id = $3",
         [quantity, product_id, user.id]
       );
+      // increment buyer's custody
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
            VALUES ($1, $2, $3)
@@ -186,15 +212,31 @@ router.post(
            DO UPDATE SET stock = product_custodies.stock + EXCLUDED.stock`,
         [product_id, buyer_id, quantity]
       );
+      // insert sale transaction
       const total_amount = Number(quantity) * Number(price_per_unit);
       const saleRes = await client.query(
-        `INSERT INTO sale_transactions (product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes, transaction_date)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP) RETURNING *`,
+        `INSERT INTO sale_transactions
+           (product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes, transaction_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+         RETURNING *`,
         [product_id, user.id, buyer_id, quantity, price_per_unit, total_amount, location, notes]
       );
-
+      const sale = saleRes.rows[0];
+      // record in product_history
+      await client.query(
+        `INSERT INTO product_history
+           (product_id, actor_id, action, timestamp, notes, blockchain_hash)
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5)`,
+        [
+          product_id,
+          user.id,
+          'Venta de producto',
+          notes || null,
+          sale.blockchain_hash || null
+        ]
+      );
       await client.query("COMMIT");
-      res.status(201).json({ message: "Venta registrada exitosamente", sale: saleRes.rows[0] });
+      res.status(201).json({ message: "Venta registrada exitosamente", sale });
     } catch (err) {
       await client.query("ROLLBACK");
       res.status(500).json({ error: err.message || "Error interno del servidor" });
@@ -204,6 +246,7 @@ router.post(
   }
 );
 
+// POST /products/transfer - transfer custody + history
 router.post(
   "/transfer",
   authenticateToken,
@@ -220,6 +263,7 @@ router.post(
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      // lock current custody
       const pcRes = await client.query(
         "SELECT stock FROM product_custodies WHERE product_id = $1 AND user_id = $2 FOR UPDATE",
         [product_id, user.id]
@@ -227,16 +271,25 @@ router.post(
       if (!pcRes.rows.length || Number(pcRes.rows[0].stock) < Number(quantity)) {
         throw new Error("Stock insuficiente o no posees este producto");
       }
+      // decrement
       await client.query(
         "UPDATE product_custodies SET stock = stock - $1 WHERE product_id = $2 AND user_id = $3",
         [quantity, product_id, user.id]
       );
+      // increment destination
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (product_id, user_id)
-         DO UPDATE SET stock = product_custodies.stock + EXCLUDED.stock`,
+           VALUES ($1, $2, $3)
+           ON CONFLICT (product_id, user_id)
+           DO UPDATE SET stock = product_custodies.stock + EXCLUDED.stock`,
         [product_id, to_user_id, quantity]
+      );
+      // record history
+      await client.query(
+        `INSERT INTO product_history
+           (product_id, actor_id, action, timestamp, notes)
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)`,
+        [product_id, user.id, 'Transferencia de custodia', notes || null]
       );
       await client.query("COMMIT");
       res.status(201).json({ message: "Transferencia realizada exitosamente" });
@@ -385,5 +438,37 @@ router.put(
     }
   }
 );
+
+router.get(
+  "/:id/history",
+  authenticateToken,
+  async (req, res) => {
+    const productId = Number(req.params.id);
+    if (!productId) {
+      return res.status(400).json({ error: "product_id inválido" });
+    }
+    try {
+      const q = `
+        SELECT
+          id,
+          action,
+          timestamp,
+          notes,
+          location,
+          blockchain_hash
+        FROM product_history
+        WHERE product_id = $1
+        ORDER BY timestamp DESC
+        LIMIT 100
+      `;
+      const { rows } = await pool.query(q, [productId]);
+      res.json({ history: rows });
+    } catch (err) {
+      console.error("Error fetching product_history:", err);
+      res.status(500).json({ error: "Error interno" });
+    }
+  }
+);
+
 
 module.exports = router;

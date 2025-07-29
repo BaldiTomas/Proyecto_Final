@@ -11,8 +11,7 @@ export interface ReportOptions {
 export interface ReportData {
   product: any
   transactions: any[]
-  currentOwner?: any
-  manufacturer?: any
+  ownershipHistory?: any[]
   reportGeneratedBy: string
   reportGeneratedAt: number
 }
@@ -30,13 +29,16 @@ export function generateProductReport(data: ReportData, options: ReportOptions):
   doc.setFontSize(20)
   doc.setTextColor(40, 40, 40)
   doc.text("TrackChain - Reporte de Trazabilidad", 20, yPosition)
-
   yPosition += 10
+
   doc.setFontSize(12)
   doc.setTextColor(100, 100, 100)
-  doc.text(`Generado el: ${new Date().toLocaleDateString("es-ES")}`, 20, yPosition)
-
-  yPosition += 20
+  doc.text(
+    `Generado el: ${new Date().toLocaleDateString("es-ES")}`,
+    20,
+    (yPosition += 10)
+  )
+  yPosition += 10
 
   if (options.includeProductDetails && data.product) {
     doc.setFontSize(16)
@@ -51,7 +53,12 @@ export function generateProductReport(data: ReportData, options: ReportOptions):
       ["Categoría", data.product.category || "N/A"],
       ["Productor", data.product.producer_name || "N/A"],
       ["Origen", data.product.origin || "N/A"],
-      ["Fecha de Creación",data.product.created_at ? new Date(data.product.created_at).toLocaleDateString("es-ES") : "N/A"],
+      [
+        "Fecha de Creación",
+        data.product.created_at
+          ? new Date(data.product.created_at).toLocaleDateString("es-ES")
+          : "N/A",
+      ],
     ]
 
     doc.autoTable({
@@ -63,39 +70,37 @@ export function generateProductReport(data: ReportData, options: ReportOptions):
       margin: { left: 20, right: 20 },
     })
 
-    yPosition = (doc as any).lastAutoTable.finalY + 20
+    yPosition = (doc as any).lastAutoTable.finalY + 10
   }
 
-  if (options.includeOwnershipHistory && data.product?.history) {
+  if (options.includeOwnershipHistory && data.ownershipHistory && data.ownershipHistory.length) {
     doc.setFontSize(16)
     doc.setTextColor(40, 40, 40)
     doc.text("Historial de Trazabilidad", 20, yPosition)
     yPosition += 10
 
-    const historyData = data.product.history.map((entry: any) => [
+    const historyData = data.ownershipHistory.map((entry: any) => [
       new Date(entry.timestamp).toLocaleDateString("es-ES"),
-      entry.actor_name || "N/A",
       entry.action || "N/A",
-      entry.location || "N/A",
-      entry.notes || "N/A",
+      entry.blockchain_hash || entry.blockchainHash || "N/A",
     ])
 
     doc.autoTable({
       startY: yPosition,
-      head: [["Fecha", "Actor", "Acción", "Ubicación", "Notas"]],
+      head: [["Fecha", "Acción", "Blockchain Hash"]],
       body: historyData,
       theme: "grid",
       headStyles: { fillColor: [59, 130, 246] },
       margin: { left: 20, right: 20 },
       columnStyles: {
-        4: { cellWidth: 40 },
+        2: { cellWidth: 100 },
       },
     })
 
-    yPosition = (doc as any).lastAutoTable.finalY + 20
+    yPosition = (doc as any).lastAutoTable.finalY + 10
   }
 
-  if (options.includeTransactions && data.transactions && data.transactions.length > 0) {
+  if (options.includeTransactions && data.transactions && data.transactions.length) {
     doc.setFontSize(16)
     doc.setTextColor(40, 40, 40)
     doc.text("Historial de Transacciones", 20, yPosition)
@@ -119,7 +124,7 @@ export function generateProductReport(data: ReportData, options: ReportOptions):
       margin: { left: 20, right: 20 },
     })
 
-    yPosition = (doc as any).lastAutoTable.finalY + 20
+    yPosition = (doc as any).lastAutoTable.finalY + 10
   }
 
   const pageCount = doc.getNumberOfPages()
@@ -130,7 +135,7 @@ export function generateProductReport(data: ReportData, options: ReportOptions):
     doc.text(
       `Página ${i} de ${pageCount} - Generado por ${data.reportGeneratedBy}`,
       20,
-      doc.internal.pageSize.height - 10,
+      doc.internal.pageSize.height - 10
     )
   }
 
