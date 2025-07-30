@@ -3,7 +3,13 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,7 +25,14 @@ interface SellFormProps {
   reloadData: () => void;
 }
 
-export default function SellForm({ apiBase, user, token, users, products, reloadData }: SellFormProps) {
+export default function SellForm({
+  apiBase,
+  user,
+  token,
+  users,
+  products,
+  reloadData,
+}: SellFormProps) {
   const [sellProductId, setSellProductId] = useState<number>();
   const [buyerId, setBuyerId] = useState<number>();
   const [sellQty, setSellQty] = useState("");
@@ -27,8 +40,12 @@ export default function SellForm({ apiBase, user, token, users, products, reload
 
   const sellOptions = products.filter(
     (p) =>
-      (p.custody_user_id === user.id || p.current_custody_id === user.id) && p.stock > 0 && p.shipment_status === "delivered"
+      (p.custody_user_id === user.id ||
+        p.current_custody_id === user.id) &&
+      p.stock > 0 &&
+      p.shipment_status === "delivered"
   );
+  // Sólo vendedores
   const buyers = users.filter((u) => u.id !== user.id && u.role === "seller");
 
   const selectedProduct = sellOptions.find((p) => p.id === sellProductId);
@@ -38,39 +55,39 @@ export default function SellForm({ apiBase, user, token, users, products, reload
     e.preventDefault();
     const qty = Number(sellQty);
 
+    // Validaciones
     if (!sellProductId || !buyerId || !sellQty)
       return toast.error("Completa todos los campos de venta");
     if (buyerId === user.id) return toast.error("No puedes vender a ti mismo");
-
     if (isNaN(qty) || qty < 1) {
       return toast.error("La cantidad debe ser mayor a cero.");
     }
     if (selectedProduct && qty > selectedProduct.stock) {
-      return toast.error(`Solo tienes ${selectedProduct.stock} unidades disponibles para vender.`);
+      return toast.error(
+        `Solo tienes ${selectedProduct.stock} unidades disponibles para vender.`
+      );
     }
 
-    const prod = sellOptions.find(
-      (p) =>
-        p.id === sellProductId &&
-        (p.custody_user_id === user.id || p.current_custody_id === user.id)
-    );
-    if (!prod) return toast.error("Producto no disponible");
-
+    // On‑chain
+    let blockchainHash: string;
     const price = selectedProduct?.price ?? 0;
-
     try {
-      await registerSaleOnChain({
+      const receipt = await registerSaleOnChain({
         productId: sellProductId,
         toCustodyId: buyerId,
         quantity: qty,
         price: +price,
       });
+      blockchainHash = receipt.transactionHash;
       toast.success("Venta registrada en blockchain");
     } catch (err: any) {
       console.error("Error on-chain:", err);
-      return toast.error("Error al registrar on-chain: " + err.message);
+      return toast.error(
+        "Error al registrar on-chain: " + err.message
+      );
     }
 
+    // Backend
     try {
       const res = await fetch(`${apiBase}/transactions`, {
         method: "POST",
@@ -80,11 +97,13 @@ export default function SellForm({ apiBase, user, token, users, products, reload
         },
         body: JSON.stringify({
           product_id: sellProductId,
+          seller_id: user.id,
           buyer_email: users.find((u) => u.id === buyerId)?.email,
           quantity: qty,
           price_per_unit: +price,
           location: "",
           notes: sellNotes,
+          blockchain_hash: blockchainHash,
         }),
       });
       if (!res.ok) {
@@ -93,6 +112,8 @@ export default function SellForm({ apiBase, user, token, users, products, reload
       }
       const { message } = await res.json();
       toast.success(message);
+
+      // Limpiar
       setSellProductId(undefined);
       setBuyerId(undefined);
       setSellQty("");
@@ -113,7 +134,10 @@ export default function SellForm({ apiBase, user, token, users, products, reload
         <form onSubmit={handleSell} className="space-y-4">
           <div>
             <Label className="text-gray-200">Producto</Label>
-            <Select value={sellProductId?.toString() || ""} onValueChange={(v) => setSellProductId(+v)}>
+            <Select
+              value={sellProductId?.toString() || ""}
+              onValueChange={(v) => setSellProductId(+v)}
+            >
               <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                 <SelectValue placeholder="Selecciona un producto" />
               </SelectTrigger>
@@ -126,9 +150,13 @@ export default function SellForm({ apiBase, user, token, users, products, reload
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label className="text-gray-200">Comprador</Label>
-            <Select value={buyerId?.toString() || ""} onValueChange={(v) => setBuyerId(+v)}>
+            <Select
+              value={buyerId?.toString() || ""}
+              onValueChange={(v) => setBuyerId(+v)}
+            >
               <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                 <SelectValue placeholder="Selecciona un comprador" />
               </SelectTrigger>
@@ -141,6 +169,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label className="text-gray-200">Cantidad</Label>
             <Input
@@ -150,16 +179,10 @@ export default function SellForm({ apiBase, user, token, users, products, reload
               value={sellQty}
               onChange={(e) => {
                 const val = e.target.value;
-                if (/^\d*$/.test(val)) {
-                  setSellQty(val);
-                }
+                if (/^\d*$/.test(val)) setSellQty(val);
               }}
               className="bg-slate-700 border-slate-600 text-white"
-              placeholder={
-                maxStock !== undefined
-                  ? `Máx: ${maxStock}`
-                  : "Ingrese cantidad"
-              }
+              placeholder={maxStock ? `Máx: ${maxStock}` : "Ingrese cantidad"}
               disabled={!selectedProduct}
             />
             {selectedProduct && (
@@ -168,6 +191,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
               </div>
             )}
           </div>
+
           <div>
             <Label className="text-gray-200">Precio Unitario (USD)</Label>
             <div className="bg-slate-700 border-slate-600 text-white px-3 py-2 rounded">
@@ -176,6 +200,7 @@ export default function SellForm({ apiBase, user, token, users, products, reload
                 : "-"}
             </div>
           </div>
+
           <div>
             <Label className="text-gray-200">Notas</Label>
             <Input
@@ -184,7 +209,11 @@ export default function SellForm({ apiBase, user, token, users, products, reload
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>
-          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+
+          <Button
+            type="submit"
+            className="w-full bg-green-600 hover:bg-green-700"
+          >
             Vender
           </Button>
         </form>

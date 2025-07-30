@@ -1,8 +1,14 @@
+// backend/routes/products.js
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const { authenticateToken, authorizeRole } = require("../middlewares/auth");
 
+/**
+ * POST /products
+ * Crea un producto, su custodia inicial y registra en product_history la creación.
+ */
 router.post(
   "/",
   authenticateToken,
@@ -28,19 +34,21 @@ router.post(
       !origin ||
       !production_date ||
       stock == null ||
-      blockchain_hash == null ||
-      metadata_hash == null ||
+      !blockchain_hash ||
+      !metadata_hash ||
       price == null
     ) {
-      return res
-        .status(400)
-        .json({ error: "Todos los campos, incluidos ambos hashes y el precio, son requeridos" });
+      return res.status(400).json({
+        error:
+          "Todos los campos, incluidos ambos hashes y el precio, son requeridos",
+      });
     }
 
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
+      // Inserta el producto
       const prodRes = await client.query(
         `INSERT INTO products
            (name, description, category, producer_id, origin, production_date,
@@ -61,12 +69,14 @@ router.post(
       );
       const product = prodRes.rows[0];
 
+      // Crea la custodia inicial
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
          VALUES ($1, $2, $3)`,
         [product.id, producer_id, stock]
       );
 
+      // Registra en el historial de producto
       await client.query(
         `INSERT INTO product_history
            (product_id, actor_id, action, location, notes, blockchain_hash)
@@ -74,9 +84,9 @@ router.post(
         [
           product.id,
           producer_id,
-          'Creación de producto',
-          null,            
-          null,            
+          "Creación de producto",
+          null,
+          null,
           blockchain_hash,
         ]
       );
@@ -95,12 +105,16 @@ router.post(
   }
 );
 
+/**
+ * GET /products
+ * Lista productos (paginado).
+ */
 router.get(
   "/",
   authenticateToken,
   async (req, res) => {
     const { custody_id, limit = 50, offset = 0 } = req.query;
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === "admin";
 
     try {
       let query, params;
@@ -160,35 +174,65 @@ router.get(
         offset: Number(offset),
       });
     } catch (err) {
+      console.error("Error obteniendo productos:", err);
       res.status(500).json({ error: "Error interno del servidor" });
     }
   }
 );
 
+/**
+ * POST /products/sales
+ * Registra una venta, guarda el hash en sale_transactions y en product_history.
+ */
 router.post(
   "/sales",
   authenticateToken,
   authorizeRole(["seller", "producer", "admin"]),
   async (req, res) => {
     const { user } = req;
-    const { product_id, buyer_email, quantity, price_per_unit, location, notes } = req.body;
-    if (!product_id || !buyer_email || !quantity || !price_per_unit) {
-      return res.status(400).json({ error: "Todos los campos son requeridos" });
+    const {
+      product_id,
+      buyer_email,
+      quantity,
+      price_per_unit,
+      location,
+      notes,
+      blockchain_hash,
+    } = req.body;
+
+    if (
+      !product_id ||
+      !buyer_email ||
+      !quantity ||
+      !price_per_unit ||
+      !blockchain_hash
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Faltan datos de venta o blockchain_hash" });
     }
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      // Buscar comprador
       const buyerRes = await client.query(
         "SELECT id FROM users WHERE email = $1 AND is_active = TRUE",
         [buyer_email]
       );
       if (!buyerRes.rows.length) throw new Error("Comprador no encontrado");
       const buyer_id = buyerRes.rows[0].id;
+
+      // Descontar stock
       const pcRes = await client.query(
         "SELECT stock FROM product_custodies WHERE product_id = $1 AND user_id = $2 FOR UPDATE",
         [product_id, user.id]
       );
-      if (!pcRes.rows.length || Number(pcRes.rows[0].stock) < Number(quantity)) {
+      if (
+        !pcRes.rows.length ||
+        Number(pcRes.rows[0].stock) < Number(quantity)
+      ) {
         throw new Error("Stock insuficiente o no posees este producto");
       }
       await client.query(
@@ -202,65 +246,107 @@ router.post(
            DO UPDATE SET stock = product_custodies.stock + EXCLUDED.stock`,
         [product_id, buyer_id, quantity]
       );
+
+      // Insertar venta on‑chain
       const total_amount = Number(quantity) * Number(price_per_unit);
       const saleRes = await client.query(
         `INSERT INTO sale_transactions
-           (product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes, transaction_date)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+           (product_id, seller_id, buyer_id, quantity, price_per_unit, total_amount, location, notes, transaction_date, blockchain_hash)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, $9)
          RETURNING *`,
-        [product_id, user.id, buyer_id, quantity, price_per_unit, total_amount, location, notes]
-      );
-      const sale = saleRes.rows[0];
-      await client.query(
-        `INSERT INTO product_history
-           (product_id, actor_id, action, timestamp, notes, blockchain_hash)
-         VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5)`,
         [
           product_id,
           user.id,
-          'Venta de producto',
-          notes || null,
-          sale.blockchain_hash || null
+          buyer_id,
+          quantity,
+          price_per_unit,
+          total_amount,
+          location,
+          notes,
+          blockchain_hash,
         ]
       );
+
+      // Registrar en historial de producto
+      await client.query(
+        `INSERT INTO product_history
+           (product_id, actor_id, action, location, notes, blockchain_hash)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          product_id,
+          user.id,
+          "Venta de producto",
+          location,
+          notes || null,
+          blockchain_hash,
+        ]
+      );
+
       await client.query("COMMIT");
-      res.status(201).json({ message: "Venta registrada exitosamente", sale });
+      res
+        .status(201)
+        .json({ message: "Venta registrada exitosamente", sale: saleRes.rows[0] });
     } catch (err) {
+      console.error("Error registrando venta:", err);
       await client.query("ROLLBACK");
-      res.status(500).json({ error: err.message || "Error interno del servidor" });
+      res
+        .status(500)
+        .json({ error: err.message || "Error interno al registrar venta" });
     } finally {
       client.release();
     }
   }
 );
 
+/**
+ * POST /products/transfer
+ * Transfiere custodia y registra en product_history (con hash opcional).
+ */
 router.post(
   "/transfer",
   authenticateToken,
   authorizeRole(["producer", "seller", "admin"]),
   async (req, res) => {
     const { user } = req;
-    const { product_id, to_user_id, quantity, notes } = req.body;
+    const {
+      product_id,
+      to_user_id,
+      quantity,
+      notes,
+      blockchain_hash,
+    } = req.body;
+
     if (!product_id || !to_user_id || !quantity) {
-      return res.status(400).json({ error: "Producto, destino y cantidad requeridos" });
+      return res
+        .status(400)
+        .json({ error: "Producto, destino y cantidad requeridos" });
     }
     if (user.id === to_user_id) {
-      return res.status(400).json({ error: "No puedes transferirte a ti mismo" });
+      return res
+        .status(400)
+        .json({ error: "No puedes transferirte a ti mismo" });
     }
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      // Descontar stock del remitente
       const pcRes = await client.query(
         "SELECT stock FROM product_custodies WHERE product_id = $1 AND user_id = $2 FOR UPDATE",
         [product_id, user.id]
       );
-      if (!pcRes.rows.length || Number(pcRes.rows[0].stock) < Number(quantity)) {
+      if (
+        !pcRes.rows.length ||
+        Number(pcRes.rows[0].stock) < Number(quantity)
+      ) {
         throw new Error("Stock insuficiente o no posees este producto");
       }
       await client.query(
         "UPDATE product_custodies SET stock = stock - $1 WHERE product_id = $2 AND user_id = $3",
         [quantity, product_id, user.id]
       );
+      // Sumar stock al destinatario
       await client.query(
         `INSERT INTO product_custodies (product_id, user_id, stock)
            VALUES ($1, $2, $3)
@@ -268,23 +354,42 @@ router.post(
            DO UPDATE SET stock = product_custodies.stock + EXCLUDED.stock`,
         [product_id, to_user_id, quantity]
       );
+
+      // Registrar en historial de producto
       await client.query(
         `INSERT INTO product_history
-           (product_id, actor_id, action, timestamp, notes)
-         VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)`,
-        [product_id, user.id, 'Transferencia de custodia', notes || null]
+           (product_id, actor_id, action, location, notes, blockchain_hash)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          product_id,
+          user.id,
+          "Transferencia de custodia",
+          null,
+          notes || null,
+          blockchain_hash || null,
+        ]
       );
+
       await client.query("COMMIT");
-      res.status(201).json({ message: "Transferencia realizada exitosamente" });
+      res
+        .status(201)
+        .json({ message: "Transferencia realizada exitosamente" });
     } catch (err) {
+      console.error("Error realizando transferencia:", err);
       await client.query("ROLLBACK");
-      res.status(500).json({ error: err.message || "Error interno del servidor" });
+      res
+        .status(500)
+        .json({ error: err.message || "Error interno al transferir" });
     } finally {
       client.release();
     }
   }
 );
 
+/**
+ * PUT /products/:id
+ * Actualiza un producto y su stock, sin modificar historial.
+ */
 router.put(
   "/:id",
   authenticateToken,
@@ -296,6 +401,7 @@ router.put(
     try {
       await client.query("BEGIN");
 
+      // Solo toggle is_active
       if (
         Object.keys(req.body).length === 1 &&
         req.body.hasOwnProperty("is_active")
@@ -320,11 +426,12 @@ router.put(
         }
         await client.query("COMMIT");
         return res.json({
-          message: `Producto ${productId} marcado inactivo`,
+          message: `Producto ${productId} marcado ${is_active ? "activo" : "inactivo"}`,
           product: result.rows[0],
         });
       }
 
+      // Actualización general
       const {
         name,
         description,
@@ -360,7 +467,7 @@ router.put(
                production_date = $5,
                metadata_hash   = COALESCE($6, metadata_hash),
                is_active       = COALESCE($7, is_active),
-               price           = COALESCE($8, price), -- Aquí
+               price           = COALESCE($8, price),
                updated_at      = CURRENT_TIMESTAMP
          WHERE id = $9
          RETURNING *
@@ -447,7 +554,7 @@ router.get(
       const { rows } = await pool.query(q, [productId]);
       res.json({ history: rows });
     } catch (err) {
-      console.error("Error fetching product_history:", err);
+      console.error("Error leyendo historial de producto:", err);
       res.status(500).json({ error: "Error interno" });
     }
   }

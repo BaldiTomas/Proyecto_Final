@@ -1,9 +1,16 @@
+// app/sales/components/BuyForm.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,7 +25,13 @@ interface BuyFormProps {
   reloadData: () => void;
 }
 
-export default function BuyForm({ apiBase, user, token, users, reloadData }: BuyFormProps) {
+export default function BuyForm({
+  apiBase,
+  user,
+  token,
+  users,
+  reloadData,
+}: BuyFormProps) {
   const [producerId, setProducerId] = useState<number>();
   const [producerProducts, setProducerProducts] = useState<Product[]>([]);
   const [buyProductId, setBuyProductId] = useState<number>();
@@ -50,33 +63,45 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
     e.preventDefault();
     const qty = Number(buyQty);
 
-    if (!producerId || !buyProductId || !buyQty)
+    // Validaciones básicas
+    if (!producerId || !buyProductId || !buyQty) {
       return toast.error("Completa todos los campos de compra");
-    if (producerId === user.id) return toast.error("No puedes comprar a ti mismo");
-
+    }
+    if (producerId === user.id) {
+      return toast.error("No puedes comprar a ti mismo");
+    }
     if (isNaN(qty) || qty < 1) {
       return toast.error("La cantidad debe ser mayor a cero.");
     }
     if (selectedProduct && qty > selectedProduct.stock) {
-      return toast.error(`No puedes comprar más de ${selectedProduct.stock} unidades de este producto.`);
+      return toast.error(
+        `No puedes comprar más de ${selectedProduct.stock} unidades de este producto.`
+      );
     }
 
     const price = selectedProduct?.price ?? 0;
 
+    let blockchainHash: string;
     try {
-      await buyProductOnChain({
+      // 1) Llamada on-chain
+      const receipt = await buyProductOnChain({
         productId: buyProductId,
         toCustodyId: user.id,
         quantity: qty,
         price: +price,
       });
+      // Sólo guardamos el hash (0x...)
+      blockchainHash = receipt.transactionHash;
       toast.success("Compra registrada en blockchain");
     } catch (err: any) {
       console.error("Error on-chain:", err);
-      return toast.error("Error al registrar la compra on-chain: " + err.message);
+      return toast.error(
+        "Error al registrar la compra on-chain: " + err.message
+      );
     }
 
     try {
+      // 2) Guardar en nuestro backend, incluyendo blockchain_hash
       const res = await fetch(`${apiBase}/transactions`, {
         method: "POST",
         headers: {
@@ -91,6 +116,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
           price_per_unit: +price,
           location: "",
           notes: buyNotes,
+          blockchain_hash: blockchainHash,
         }),
       });
       if (!res.ok) {
@@ -99,6 +125,8 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
       }
       const { message } = await res.json();
       toast.success(message);
+
+      // Limpiar formulario y recargar lista
       setProducerId(undefined);
       setProducerProducts([]);
       setBuyProductId(undefined);
@@ -120,7 +148,10 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
         <form onSubmit={handleBuy} className="space-y-4">
           <div>
             <Label className="text-gray-200">Productor</Label>
-            <Select value={producerId?.toString() || ""} onValueChange={(v) => setProducerId(+v)}>
+            <Select
+              value={producerId?.toString() || ""}
+              onValueChange={(v) => setProducerId(+v)}
+            >
               <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                 <SelectValue placeholder="Selecciona un productor" />
               </SelectTrigger>
@@ -133,6 +164,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label className="text-gray-200">Producto</Label>
             <Select
@@ -141,7 +173,13 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               disabled={!producerId}
             >
               <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                <SelectValue placeholder={producerId ? "Selecciona un producto" : "Elige productor primero"} />
+                <SelectValue
+                  placeholder={
+                    producerId
+                      ? "Selecciona un producto"
+                      : "Elige productor primero"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 text-white border-slate-700">
                 {producerProducts.length > 0 ? (
@@ -158,6 +196,7 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               </SelectContent>
             </Select>
           </div>
+
           <div>
             <Label className="text-gray-200">Cantidad</Label>
             <Input
@@ -167,15 +206,11 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               value={buyQty}
               onChange={(e) => {
                 const val = e.target.value;
-                if (/^\d*$/.test(val)) {
-                  setBuyQty(val);
-                }
+                if (/^\d*$/.test(val)) setBuyQty(val);
               }}
               className="bg-slate-700 border-slate-600 text-white"
               placeholder={
-                maxStock !== undefined
-                  ? `Máx: ${maxStock}`
-                  : "Ingrese cantidad"
+                maxStock !== undefined ? `Máx: ${maxStock}` : "Ingrese cantidad"
               }
               disabled={!selectedProduct}
             />
@@ -185,14 +220,18 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               </div>
             )}
           </div>
+
           <div>
-            <Label className="text-gray-200">Precio Unitario (USD)</Label>
+            <Label className="text-gray-200">
+              Precio Unitario (USD)
+            </Label>
             <div className="bg-slate-700 border-slate-600 text-white px-3 py-2 rounded">
               {selectedProduct
                 ? `$${Number(selectedProduct.price).toFixed(2)}`
                 : "-"}
             </div>
           </div>
+
           <div>
             <Label className="text-gray-200">Notas</Label>
             <Input
@@ -201,7 +240,11 @@ export default function BuyForm({ apiBase, user, token, users, reloadData }: Buy
               className="bg-slate-700 border-slate-600 text-white"
             />
           </div>
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+
+          <Button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
             Comprar
           </Button>
         </form>
