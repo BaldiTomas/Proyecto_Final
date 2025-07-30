@@ -200,16 +200,6 @@ export default function SellForm({
                 : "-"}
             </div>
           </div>
-
-          <div>
-            <Label className="text-gray-200">Notas</Label>
-            <Input
-              value={sellNotes}
-              onChange={(e) => setSellNotes(e.target.value)}
-              className="bg-slate-700 border-slate-600 text-white"
-            />
-          </div>
-
           <Button
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700"

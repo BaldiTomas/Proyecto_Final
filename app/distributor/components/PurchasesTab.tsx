@@ -117,22 +117,6 @@ export default function PurchasesTab({
                         </p>
                       </div>
 
-                      <div className="py-2">
-                        <Label
-                          htmlFor="shipment-note"
-                          className="text-sm text-gray-300"
-                        >
-                          Nota (opcional)
-                        </Label>
-                        <Textarea
-                          id="shipment-note"
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                          className="w-full bg-slate-700 text-white border-slate-600"
-                          placeholder="Comentario..."
-                        />
-                      </div>
-
                       <DialogFooter className="flex justify-end gap-2">
                         <Button
                           variant="outline"

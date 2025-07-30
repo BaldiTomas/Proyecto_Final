@@ -1,6 +1,5 @@
-"use client";
-
 import { FC, useState } from "react";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   Card,
   CardHeader,
@@ -23,12 +22,14 @@ import type {
   NewShipmentData,
 } from "../../types";
 
+
 const STATUS_LABELS: Record<ShipmentStatus, string> = {
   pending: "Pendiente",
   in_transit: "En tránsito",
   delivered: "Entregado",
   cancelled: "Cancelado",
 };
+
 
 function getStatusIcon(status: ShipmentStatus) {
   switch (status) {
@@ -43,6 +44,7 @@ function getStatusIcon(status: ShipmentStatus) {
   }
 }
 
+
 function getStatusColor(status: ShipmentStatus) {
   switch (status) {
     case "in_transit":
@@ -56,6 +58,7 @@ function getStatusColor(status: ShipmentStatus) {
   }
 }
 
+
 interface ShipmentsTabProps {
   products: Product[];
   shipments: Shipment[];
@@ -64,6 +67,7 @@ interface ShipmentsTabProps {
   onUpdateStatus: (shipmentId: number, status: ShipmentStatus) => void;
 }
 
+
 const ShipmentsTab: FC<ShipmentsTabProps> = ({
   products,
   shipments,
@@ -71,10 +75,21 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
   onRegister,
   onUpdateStatus,
 }) => {
+  const { user } = useAuthStore();
+  // Filtrar envíos por transportista igual al usuario autenticado
+  const userShipments = shipments.filter(
+    (s) => s.transport_company === user?.name
+  );
+
+
   const [page, setPage] = useState(0);
   const pageSize = 5;
-  const pageCount = Math.ceil(shipments.length / pageSize);
-  const paged = shipments.slice(page * pageSize, page * pageSize + pageSize);
+  const pageCount = Math.ceil(userShipments.length / pageSize);
+  const paged = userShipments.slice(
+    page * pageSize,
+    page * pageSize + pageSize
+  );
+
 
   return (
     <div className="space-y-6">
@@ -88,6 +103,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
           </div>
         )}
       </div>
+
 
       <div className="grid gap-4">
         {paged.map((s) => (
@@ -113,6 +129,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                 </Badge>
               </div>
             </CardHeader>
+
 
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -155,6 +172,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
                 )}
               </div>
 
+
               {s.notes && (
                 <div className="mt-4 bg-slate-700/50 p-3 rounded-lg">
                   <p className="text-sm text-gray-300">{s.notes}</p>
@@ -164,6 +182,7 @@ const ShipmentsTab: FC<ShipmentsTabProps> = ({
           </Card>
         ))}
       </div>
+
 
       {pageCount > 1 && (
         <div className="flex justify-center space-x-2 mt-4">
